@@ -1,0 +1,576 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "Produkt-Auswahl",
+      "weight": "Bolder",
+      "size": "Large",
+      "wrap": true
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item1/200/150",
+              "size": "Stretch",
+              "id": "image1"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 1 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc1"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty1",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item2/200/150",
+              "size": "Stretch",
+              "id": "image2"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 2 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc2"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty2",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item3/200/150",
+              "size": "Stretch",
+              "id": "image3"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 3 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc3"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty3",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item4/200/150",
+              "size": "Stretch",
+              "id": "image4"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 4 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc4"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty4",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        }
+      ],
+      "spacing": "Medium",
+      "separator": false
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item5/200/150",
+              "size": "Stretch",
+              "id": "image5"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 5 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc5"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty5",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item6/200/150",
+              "size": "Stretch",
+              "id": "image6"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 6 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc6"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty6",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item7/200/150",
+              "size": "Stretch",
+              "id": "image7"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 7 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc7"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty7",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item8/200/150",
+              "size": "Stretch",
+              "id": "image8"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 8 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc8"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty8",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        }
+      ],
+      "spacing": "Medium",
+      "separator": true
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item9/200/150",
+              "size": "Stretch",
+              "id": "image9"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 9 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc9"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty9",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item10/200/150",
+              "size": "Stretch",
+              "id": "image10"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 10 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc10"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty10",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item11/200/150",
+              "size": "Stretch",
+              "id": "image11"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 11 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc11"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty11",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item12/200/150",
+              "size": "Stretch",
+              "id": "image12"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 12 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc12"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty12",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        }
+      ],
+      "spacing": "Medium",
+      "separator": true
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item13/200/150",
+              "size": "Stretch",
+              "id": "image13"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 13 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc13"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty13",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item14/200/150",
+              "size": "Stretch",
+              "id": "image14"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 14 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc14"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty14",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item15/200/150",
+              "size": "Stretch",
+              "id": "image15"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 15 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc15"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty15",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item16/200/150",
+              "size": "Stretch",
+              "id": "image16"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 16 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc16"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty16",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        }
+      ],
+      "spacing": "Medium",
+      "separator": true
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item17/200/150",
+              "size": "Stretch",
+              "id": "image17"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 17 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc17"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty17",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item18/200/150",
+              "size": "Stretch",
+              "id": "image18"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 18 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc18"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty18",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item19/200/150",
+              "size": "Stretch",
+              "id": "image19"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 19 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc19"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty19",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "items": [
+            {
+              "type": "Image",
+              "url": "https://picsum.photos/seed/item20/200/150",
+              "size": "Stretch",
+              "id": "image20"
+            },
+            {
+              "type": "TextBlock",
+              "text": "Item 20 description",
+              "wrap": true,
+              "size": "Small",
+              "id": "desc20"
+            },
+            {
+              "type": "Input.Number",
+              "id": "qty20",
+              "placeholder": "Menge",
+              "min": 0,
+              "max": 100
+            }
+          ]
+        }
+      ],
+      "spacing": "Medium",
+      "separator": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Execute",
+      "title": "Bestellung absenden",
+      "verb": "submitOrder"
+    }
+  ]
+}

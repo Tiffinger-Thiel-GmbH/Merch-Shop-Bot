@@ -1,0 +1,17 @@
+{
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "Bitte gib deinen Namen ein",
+      "weight": "Bolder",
+      "size": "Medium"
+    },
+    { "type": "Input.Text", "id": "name", "placeholder": "Name" }
+  ],
+  "actions": [
+    { "type": "Action.Execute", "title": "Absenden", "verb": "submitName" }
+  ]
+}
