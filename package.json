@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Microsoft 365 Agents Toolkit message extension sample",
   "engines": {
-    "node": "20 || 22"
+    "node": "22"
   },
   "author": "Microsoft",
   "license": "MIT",
@@ -25,6 +25,7 @@
     "watch": "nodemon --exec \"npm run start\""
   },
   "dependencies": {
+    "@microsoft/teamsfx": "4.0.3",
     "@azure/identity": "^4.11.1",
     "@microsoft/teams.api": "^2.0.0",
     "@microsoft/teams.apps": "^2.0.0",

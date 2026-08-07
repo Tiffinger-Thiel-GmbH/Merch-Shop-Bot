@@ -5,12 +5,11 @@ import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
 import { DevtoolsPlugin } from "@microsoft/teams.dev";
 import welcomeCardJson from "./cards/welcomeCard.json";
-import {
-  createProductDetailCard,
-  createShopCard,
-  createShopErrorCard,
-} from "./shop-cards";
-import { getShopProduct, getShopProducts } from "./shop-api";
+import shopCardJson from "./cards/shopCard.json";
+
+const welcomeCard = welcomeCardJson as IAdaptiveCard;
+const shopCard = shopCardJson as IAdaptiveCard;
+
 import {
   createCard,
   createConversationMembersCard,
@@ -18,33 +17,6 @@ import {
   createLinkUnfurlCard,
   createMessageDetailsCard,
 } from "./card";
-
-const welcomeCard = welcomeCardJson as IAdaptiveCard;
-
-type ShopActionData = {
-  action?: string;
-  id?: string;
-};
-
-function getShopActionData(value: unknown): ShopActionData | undefined {
-  if (!value || typeof value !== "object") {
-    return undefined;
-  }
-
-  const actionData =
-    "action" in value &&
-    value.action &&
-    typeof value.action === "object" &&
-    "data" in value.action
-      ? value.action.data
-      : value;
-
-  if (!actionData || typeof actionData !== "object") {
-    return undefined;
-  }
-
-  return actionData as ShopActionData;
-}
 
 const createTokenFactory = () => {
   return async (
@@ -99,76 +71,11 @@ app.on("install.add", async ({ send }) => {
 app.on("message", async ({ send, activity }) => {
   const text = activity.text?.trim().toLowerCase();
   if (text === "/shop") {
-    try {
-      const products = await getShopProducts();
-      const card = createShopCard(products);
-
-      await send({
-        type: "message",
-        attachments: [cardAttachment("adaptive", card)],
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      const card = createShopErrorCard(message);
-
-      await send({
-        type: "message",
-        attachments: [cardAttachment("adaptive", card)],
-      });
-    }
-
-    return;
-  }
-
-  const actionData = getShopActionData(activity.value);
-  if (actionData?.action === "openMessage") {
-    try {
-      if (!actionData.id) {
-        throw new Error("Missing product id");
-      }
-
-      const product = await getShopProduct(actionData.id);
-      const card = createProductDetailCard(product);
-
-      await send({
-        type: "message",
-        attachments: [cardAttachment("adaptive", card)],
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      const card = createShopErrorCard(message);
-
-      await send({
-        type: "message",
-        attachments: [cardAttachment("adaptive", card)],
-      });
-    }
-  }
-});
-
-app.on("card.action.openMessage", async ({ activity }) => {
-  const actionData = getShopActionData(activity.value);
-
-  try {
-    if (!actionData?.id) {
-      throw new Error("Missing product id");
-    }
-
-    const product = await getShopProduct(actionData.id);
-
-    return {
-      statusCode: 200,
-      type: "application/vnd.microsoft.card.adaptive",
-      value: createProductDetailCard(product),
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-
-    return {
-      statusCode: 200,
-      type: "application/vnd.microsoft.card.adaptive",
-      value: createShopErrorCard(message),
-    };
+    const card = shopCard;
+    await send({
+      type: "message",
+      attachments: [cardAttachment("adaptive", card)],
+    });
   }
 });
 
