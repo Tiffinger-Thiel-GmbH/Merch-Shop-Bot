@@ -13,6 +13,7 @@
     "README.md"
   ],
   "scripts": {
+    "generate:api": "orval --config ./orval.config.ts",
     "dev:teamsfx": "env-cmd --silent -f .localConfigs npm run dev",
     "dev:teamsfx:playground": "env-cmd --silent -f .localConfigs.playground npm run dev",
     "dev:teamsfx:launch-playground": "env-cmd --silent -f env/.env.playground agentsplayground start",
@@ -25,7 +26,6 @@
     "watch": "nodemon --exec \"npm run start\""
   },
   "dependencies": {
-    "@microsoft/teamsfx": "4.0.3",
     "@azure/identity": "^4.11.1",
     "@microsoft/teams.api": "^2.0.0",
     "@microsoft/teams.apps": "^2.0.0",
@@ -33,7 +33,10 @@
     "@microsoft/teams.common": "^2.0.0",
     "@microsoft/teams.dev": "^2.0.0",
     "@microsoft/teams.graph": "^2.0.0",
-    "botbuilder": "^4.23.3"
+    "@microsoft/teamsfx": "4.0.3",
+    "axios": "^1.19.0",
+    "botbuilder": "^4.23.3",
+    "orval": "^8.23.0"
   },
   "devDependencies": {
     "@types/node": "^22.5.4",

@@ -17,6 +17,7 @@ import {
   createLinkUnfurlCard,
   createMessageDetailsCard,
 } from "./card";
+import { productsControllerFindAll } from "./api/merchApi";
 
 const createTokenFactory = () => {
   return async (
@@ -72,6 +73,8 @@ app.on("message", async ({ send, activity }) => {
   const text = activity.text?.trim().toLowerCase();
   if (text === "/shop") {
     const card = shopCard;
+    const result = await productsControllerFindAll();
+    console.log(result.items);
     await send({
       type: "message",
       attachments: [cardAttachment("adaptive", card)],
