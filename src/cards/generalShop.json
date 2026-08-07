@@ -1,0 +1,95 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.6",
+  "body": [
+    {
+      "type": "Image",
+      "id": "image1",
+      "url": "https://adaptivecards.io/content/cats/1.png",
+      "altText": "Cat 1",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image1" },
+        "title": "View Cat 1"
+      }
+    },
+    {
+      "type": "Image",
+      "id": "image2",
+      "url": "https://adaptivecards.io/content/cats/2.png",
+      "altText": "Cat 2",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image2" },
+        "title": "View Cat 2"
+      }
+    },
+    {
+      "type": "Image",
+      "id": "image3",
+      "url": "https://adaptivecards.io/content/cats/3.png",
+      "altText": "Cat 3",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image3" },
+        "title": "View Cat 3"
+      }
+    },
+    {
+      "type": "Image",
+      "id": "image4",
+      "url": "https://adaptivecards.io/content/cats/4.png",
+      "altText": "Cat 4",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image4" },
+        "title": "View Cat 4"
+      }
+    },
+    {
+      "type": "Image",
+      "id": "image5",
+      "url": "https://adaptivecards.io/content/cats/5.png",
+      "altText": "Cat 5",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image5" },
+        "title": "View Cat 5"
+      }
+    },
+    {
+      "type": "Image",
+      "id": "image6",
+      "url": "https://adaptivecards.io/content/cats/6.png",
+      "altText": "Cat 6",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image6" },
+        "title": "View Cat 6"
+      }
+    },
+    {
+      "type": "Image",
+      "id": "image7",
+      "url": "https://adaptivecards.io/content/cats/7.png",
+      "altText": "Cat 7",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image7" },
+        "title": "View Cat 7"
+      }
+    },
+    {
+      "type": "Image",
+      "id": "image8",
+      "url": "https://adaptivecards.io/content/cats/8.png",
+      "altText": "Cat 8",
+      "selectAction": {
+        "type": "Action.Submit",
+        "data": { "action": "openMessage", "id": "image8" },
+        "title": "View Cat 8"
+      }
+    }
+  ]
+}
