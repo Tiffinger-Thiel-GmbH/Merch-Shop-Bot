@@ -6,6 +6,7 @@ export default defineConfig({
     output: {
       httpClient: "axios",
       target: "./src/api/merchApi.ts",
+      tsconfig: "./tsconfig.json",
       override: {
         mutator: {
           path: "./src/api/axiosInstance.ts",

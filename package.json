@@ -16,7 +16,7 @@
     "orval:generate": "orval --config ./orval.config.ts",
     "dev:teamsfx": "env-cmd --silent -f .localConfigs npm run dev",
     "dev:teamsfx:playground": "env-cmd --silent -f .localConfigs.playground npm run dev",
-    "dev:teamsfx:launch-playground": "env-cmd --silent -f env/.env.playground agentsplayground start",
+    "dev:teamsfx:launch-playground": "env-cmd --silent -f env/.env.playground npx agentsplayground start",
     "clean": "rimraf ./dist",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
@@ -39,12 +39,14 @@
     "orval": "^8.23.0"
   },
   "devDependencies": {
-    "@types/node": "^22.5.4",
-    "dotenv": "^16.4.5",
+    "@microsoft/m365agentsplayground": "^0.2.28",
+    "@types/node": "^22.20.1",
+    "dotenv": "^17.4.2",
     "env-cmd": "^11.0.0",
     "nodemon": "^3.1.4",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
-  }
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "npm@12.0.2+sha512.b885e890b9418fa1693544d05f53e64f9a73ec194837d4258b15fecdd692347b1dd2a517b1b0cbaf9d31cd8e92c3b70956bd2ecc72833a57b4b3098f5bfa7943"
 }
