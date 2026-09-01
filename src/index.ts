@@ -4,8 +4,7 @@ import { App } from "@microsoft/teams.apps";
 import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
 import { DevtoolsPlugin } from "@microsoft/teams.dev";
-import welcomeCardJson from "./cards/welcomeCard.json";
-import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
+
 import {
   createCard,
   createConversationMembersCard,
@@ -15,13 +14,13 @@ import {
 } from "./card";
 import {
   orderControllerCreate,
+  productsControllerFindAll,
+  productsControllerFindOneById,
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
-  productsControllerFindAll,
 } from "./api/merchApi";
-
-const welcomeCard = welcomeCardJson as IAdaptiveCard;
-const ORDER_USER_ID = "9aaca58e-4ea2-4008-bfc7-2007cd91c0f1";
+import { buildProductsCard } from "./cardBuilder/shopCardBuilder";
+import { buildVariantsCard } from "./cardBuilder/variantCardBuilder";
 
 const createTokenFactory = () => {
   return async (
@@ -54,7 +53,7 @@ const options =
 
 const app = new App({
   ...options,
-  logger: new ConsoleLogger("Merch-Shop-Bot", { level: "debug" }),
+  logger: new ConsoleLogger("testsimple", { level: "debug" }),
   skipAuth: !process.env.CLIENT_ID,
 });
 
@@ -66,53 +65,18 @@ app.on("install.add", async ({ send }) => {
     3. Message extension commands - handling card creation.
   `;
   await send(greeting);
-  const card = welcomeCard;
-  await send({
-    type: "message",
-    attachments: [cardAttachment("adaptive", card)],
-  });
 });
 
-app.on("message", async ({ send, activity }) => {
-  const data = getCardActionData(activity.value);
-  if (data?.action) {
-    switch (data.action) {
-      case "nextPage":
-        return sendProductsCard(send, data.page ?? 0);
+// --- Activity handler ---
 
-      case "selectProduct":
-        if (data.productId) {
-          return sendVariantsCard(send, data.productId);
-        }
-        break;
-
-      case "filterVariants":
-        if (data.productId) {
-          return sendVariantsCard(send, data.productId, data.category);
-        }
-        break;
-
-      case "submitProductSelection":
-        return sendProductSelectionCard(send, data);
-
-      case "backToProducts":
-        return sendProductsCard(send);
-    }
-  }
-
-  const text = activity.text?.trim().toLowerCase();
-  if (text === "/shop") {
-    return sendProductsCard(send);
-  }
-});
-
+// Defining Card Actions
 type CardActionData = {
   action?: string;
   page?: number;
   productId?: string;
   category?: string;
   variantInputIds?: VariantInputId[];
-  [key: string]: unknown;
+  [key: string]: unknown; // Inputs land here
 };
 
 type VariantInputId = {
@@ -122,7 +86,10 @@ type VariantInputId = {
 
 type SendFunction = (activity: Parameters<typeof app.send>[1]) => Promise<any>;
 
-function getCardActionData(value: unknown): CardActionData | undefined {
+// --- Funktionen für app.on("message") ---
+
+// function for getting the action used by a button or click
+function getCardAction(value: unknown): CardActionData | undefined {
   if (!value || typeof value !== "object") {
     return undefined;
   }
@@ -139,34 +106,7 @@ function getCardActionData(value: unknown): CardActionData | undefined {
   return value as CardActionData;
 }
 
-function adaptiveCardResponse(card: object) {
-  return {
-    statusCode: 200 as const,
-    type: "application/vnd.microsoft.card.adaptive" as const,
-    value: card as IAdaptiveCard,
-  };
-}
-
-function errorResponse(message: string, statusCode: 400 | 500 = 400) {
-  return {
-    statusCode,
-    type: "application/vnd.microsoft.error" as const,
-    value: {
-      code: "BadRequest",
-      message,
-      innerHttpError: {
-        statusCode,
-        body: { message },
-      },
-    },
-  };
-}
-
-async function buildProductsResponse(page = 0) {
-  const products = await productsControllerFindAll();
-  return adaptiveCardResponse(buildProductsCard(products, page));
-}
-
+// function used for sending the Product Card
 async function sendProductsCard(send: SendFunction, page = 0) {
   const products = await productsControllerFindAll();
   const card = buildProductsCard(products, page) as IAdaptiveCard;
@@ -176,7 +116,15 @@ async function sendProductsCard(send: SendFunction, page = 0) {
   });
 }
 
-async function buildVariantsResponse(productId: string, category?: string) {
+// function used for sending the Variants Card
+async function sendVariantsCard(
+  send: SendFunction,
+  productId: string,
+  category?: string,
+  quantity = 1,
+) {
+  // function for finding out the name of a product
+  const product = await productsControllerFindOneById(productId);
   const categories =
     await productVariantCategoryControllerFindCategories(productId);
   const variants = await productVariantControllerFindVariants(
@@ -184,23 +132,22 @@ async function buildVariantsResponse(productId: string, category?: string) {
     category ? { category } : undefined,
   );
 
-  return adaptiveCardResponse(
-    buildVariantsCard(productId, categories, category ?? "", variants),
-  );
-}
+  const card = buildVariantsCard(
+    productId,
+    product.name,
+    categories,
+    category ?? "",
+    variants,
+    quantity,
+  ) as IAdaptiveCard;
 
-async function sendVariantsCard(
-  send: SendFunction,
-  productId: string,
-  category?: string,
-) {
-  const response = await buildVariantsResponse(productId, category);
   await send({
     type: "message",
-    attachments: [cardAttachment("adaptive", response.value)],
+    attachments: [cardAttachment("adaptive", card)],
   });
 }
 
+// helper: pulls the selected variant ids out of the submitted card data
 function getSelectedVariantIds(data: CardActionData) {
   const inputIds = data.variantInputIds ?? [];
   const selected = inputIds
@@ -230,23 +177,30 @@ function getSelectedVariantIds(data: CardActionData) {
   };
 }
 
-async function buildProductSelectionResponse(data: CardActionData) {
+// function used for submitting the product selection and creating the order
+async function sendProductSelectionCard(
+  send: SendFunction,
+  data: CardActionData,
+) {
   if (!data.productId) {
-    return errorResponse("productId fehlt.");
+    await send(`productId fehlt.`);
+    return;
   }
 
   const { selected, missing } = getSelectedVariantIds(data);
   if (missing.length > 0) {
-    return errorResponse(`Bitte auswählen: ${missing.join(", ")}.`);
+    await send(`Bitte auswählen: ${missing.join(", ")}.`);
+    return;
   }
 
   const productVariantIds = selected.map((item) => item.productVariantId);
   if (productVariantIds.length === 0) {
-    return errorResponse("Keine Varianten ausgewählt.");
+    await send(`Keine Varianten ausgewählt.`);
+    return;
   }
 
   await orderControllerCreate({
-    userId: ORDER_USER_ID,
+    userId: process.env.ORDER_USER_ID,
     items: [
       {
         productId: data.productId,
@@ -255,51 +209,42 @@ async function buildProductSelectionResponse(data: CardActionData) {
       },
     ],
   });
-
-  return null;
 }
 
-async function sendProductSelectionCard(
-  send: SendFunction,
-  data: CardActionData,
-) {
-  const response = await buildProductSelectionResponse(data);
-  if (response) {
-    await send(response.value.message);
+// --- Message verwaltung ---
+
+app.on("message", async ({ send, activity }) => {
+  const data = getCardAction(activity.value);
+  console.log(data);
+  if (data?.action) {
+    switch (data.action) {
+      case "nextPage":
+        return sendProductsCard(send, data.page ?? 0);
+
+      case "selectProduct":
+        if (data.productId) {
+          return sendVariantsCard(send, data.productId);
+        }
+        break;
+
+      case "filterVariants":
+        if (data.productId) {
+          return sendVariantsCard(send, data.productId, data.category);
+        }
+        break;
+
+      case "submitProductSelection":
+        return sendProductSelectionCard(send, data);
+
+      case "backToProducts":
+        return sendProductsCard(send);
+    }
   }
-}
 
-app.on("card.action.nextPage", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  return buildProductsResponse(data.page ?? 0);
-});
-
-app.on("card.action.selectProduct", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  if (!data.productId) {
-    return errorResponse("productId fehlt.");
+  const text = activity.text?.trim().toLowerCase();
+  if (text === "/shop") {
+    return sendProductsCard(send);
   }
-
-  return buildVariantsResponse(data.productId);
-});
-
-app.on("card.action.filterVariants", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  if (!data.productId) {
-    return errorResponse("productId fehlt.");
-  }
-
-  return buildVariantsResponse(data.productId, data.category);
-});
-
-app.on("card.action.submitProductSelection", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  const response = await buildProductSelectionResponse(data);
-  return response ?? undefined;
-});
-
-app.on("card.action.backToProducts", async () => {
-  return buildProductsResponse();
 });
 
 // :snippet-start: message-ext-query-link
