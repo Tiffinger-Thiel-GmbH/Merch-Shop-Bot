@@ -89,7 +89,7 @@ export function buildVariantsCard(
       },
       {
         type: "Action.Submit",
-        title: "Auswahl senden",
+        title: "Bestellen",
         style: "positive",
         data: {
           action: "submitProductSelection",
