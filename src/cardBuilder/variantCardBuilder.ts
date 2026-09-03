@@ -1,3 +1,4 @@
+import { BackgroundImage } from "@microsoft/teams.cards";
 import {
   ProductVariantCategoriesDTO,
   ProductVariantListDTO,
@@ -82,17 +83,19 @@ export function buildVariantsCard(
     actions: [
       {
         type: "Action.Submit",
+        title: "Zurück zu Produkten",
+        data: { action: "backToProducts" },
+        style: "destructive",
+      },
+      {
+        type: "Action.Submit",
         title: "Auswahl senden",
+        style: "positive",
         data: {
           action: "submitProductSelection",
           productId,
           variantInputIds: categoryInputIds,
         },
-      },
-      {
-        type: "Action.Submit",
-        title: "Zurück zu Produkten",
-        data: { action: "backToProducts" },
       },
     ],
   };

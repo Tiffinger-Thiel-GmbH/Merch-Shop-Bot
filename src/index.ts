@@ -22,6 +22,8 @@ import {
 import { buildProductsCard } from "./cardBuilder/shopCardBuilder";
 import { buildVariantsCard } from "./cardBuilder/variantCardBuilder";
 
+const ORDER_USER_ID = "9aaca58e-4ea2-4008-bfc7-2007cd91c0f1";
+
 const createTokenFactory = () => {
   return async (
     scope: string | string[],
@@ -53,7 +55,7 @@ const options =
 
 const app = new App({
   ...options,
-  logger: new ConsoleLogger("testsimple", { level: "debug" }),
+  logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
   skipAuth: !process.env.CLIENT_ID,
 });
 
@@ -200,7 +202,7 @@ async function sendProductSelectionCard(
   }
 
   await orderControllerCreate({
-    userId: process.env.ORDER_USER_ID,
+    userId: ORDER_USER_ID,
     items: [
       {
         productId: data.productId,
