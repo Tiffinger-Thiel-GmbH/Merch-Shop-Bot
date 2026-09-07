@@ -12,7 +12,6 @@ export interface ProductDTO {
   /** @nullable */
   description: string | null;
   id: string;
-  imageUrl: string;
 }
 
 export interface ProductListDTO {
@@ -88,12 +87,12 @@ export const productsControllerFindAll = (
   );
 };
 
-export const productsControllerFindImageUrl = (
+export const productsControllerFindOneById = (
   id: string,
-  options?: SecondParameter<typeof customInstance<void>>,
+  options?: SecondParameter<typeof customInstance<ProductDTO>>,
 ) => {
-  return customInstance<void>(
-    { url: `/product/${id}/image-url`, method: "GET" },
+  return customInstance<ProductDTO>(
+    { url: `/product/${id}`, method: "GET" },
     options,
   );
 };
@@ -137,8 +136,8 @@ export const productVariantControllerFindVariants = (
 export type ProductsControllerFindAllResult = NonNullable<
   Awaited<ReturnType<typeof productsControllerFindAll>>
 >;
-export type ProductsControllerFindImageUrlResult = NonNullable<
-  Awaited<ReturnType<typeof productsControllerFindImageUrl>>
+export type ProductsControllerFindOneByIdResult = NonNullable<
+  Awaited<ReturnType<typeof productsControllerFindOneById>>
 >;
 export type OrderControllerCreateResult = NonNullable<
   Awaited<ReturnType<typeof orderControllerCreate>>

@@ -36,7 +36,8 @@
     "@microsoft/teamsfx": "4.0.3",
     "axios": "^1.19.0",
     "botbuilder": "^4.23.3",
-    "orval": "^8.23.0"
+    "orval": "^8.23.0",
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "@microsoft/m365agentsplayground": "^0.2.28",
