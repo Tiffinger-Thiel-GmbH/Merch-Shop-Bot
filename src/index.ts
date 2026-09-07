@@ -75,6 +75,17 @@ app.on("install.add", async ({ send }) => {
 
 app.on("message", async ({ send, activity }) => {
   const data = getCardActionData(activity.value);
+  // Define the ID(s) to filter out (e.g., your own previous messages)
+  const filteredIds = ["message-id-to-ignore-1", "message-id-to-ignore-2"];
+
+  // Check if the incoming message ID is in the filter list
+  if (filteredIds.includes(activity.id)) {
+    return; // Ignore this message
+  }
+  console.log(filteredIds);
+
+  // Process other messages
+  await send(`Processed message: ${activity.id}`);
   if (data?.action) {
     switch (data.action) {
       case "nextPage":
