@@ -1,4 +1,5 @@
 import { ManagedIdentityCredential } from "@azure/identity";
+import orderResponseCardJson from "./cards/orderResponse.json";
 import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
 import welcomeCardJson from "./cards/welcomeCard.json";
@@ -28,6 +29,7 @@ import {
   TokenCredentials,
 } from "@microsoft/teams.api";
 
+const orderResponseCard = orderResponseCardJson as IAdaptiveCard;
 const welcomeCard = welcomeCardJson as IAdaptiveCard;
 const ORDER_USER_ID = "9aaca58e-4ea2-4008-bfc7-2007cd91c0f1";
 
@@ -166,6 +168,10 @@ app.on("message", async ({ send, activity, api }) => {
         break;
 
       case "submitProductSelection":
+        await sendOrReplace({
+          type: "message",
+          attachments: [cardAttachment("adaptive", orderResponseCard)],
+        });
         return sendProductSelectionCard(send, data);
 
       case "backToProducts":
