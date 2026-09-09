@@ -1,9 +1,6 @@
 import { ManagedIdentityCredential } from "@azure/identity";
-import { cardAttachment, TokenCredentials } from "@microsoft/teams.api";
-import { App } from "@microsoft/teams.apps";
 import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
-import { DevtoolsPlugin } from "@microsoft/teams.dev";
 import welcomeCardJson from "./cards/welcomeCard.json";
 import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
 import {
@@ -19,9 +16,39 @@ import {
   productVariantControllerFindVariants,
   productsControllerFindAll,
 } from "./api/merchApi";
+import { App, IBaseActivityContext } from "@microsoft/teams.apps";
+import {
+  ActivityLike,
+  cardAttachment,
+  ConversationReference,
+  IMessageActivity,
+  IMessageActivityInput,
+  MessageActivityInput,
+  SentActivity,
+  TokenCredentials,
+} from "@microsoft/teams.api";
 
 const welcomeCard = welcomeCardJson as IAdaptiveCard;
 const ORDER_USER_ID = "9aaca58e-4ea2-4008-bfc7-2007cd91c0f1";
+
+type ConversationSendFunction = IBaseActivityContext<never, never>["send"];
+
+//
+const PreviousMessageReferences: Record<string, string> = {};
+function sendWithRef(
+  parent: IMessageActivity,
+  send: ConversationSendFunction,
+): ConversationSendFunction {
+  const sendFunction = async (
+    activity: ActivityLike,
+    conversationRef?: ConversationReference,
+  ) => {
+    const result = await send(activity, conversationRef);
+    PreviousMessageReferences[parent.from.id] = result.id;
+    return result;
+  };
+  return sendFunction;
+}
 
 const createTokenFactory = () => {
   return async (
@@ -50,7 +77,7 @@ const tokenCredentials: TokenCredentials = {
 const options =
   process.env.BOT_TYPE === "UserAssignedMsi"
     ? { ...tokenCredentials }
-    : { plugins: [new DevtoolsPlugin()] };
+    : { plugins: [] };
 
 const app = new App({
   ...options,
@@ -73,7 +100,7 @@ app.on("install.add", async ({ send }) => {
   });
 });
 
-app.on("message", async ({ send, activity }) => {
+app.on("message", async ({ send, activity, api }) => {
   const data = getCardActionData(activity.value);
   // Define the ID(s) to filter out (e.g., your own previous messages)
   const filteredIds = ["message-id-to-ignore-1", "message-id-to-ignore-2"];
@@ -85,21 +112,56 @@ app.on("message", async ({ send, activity }) => {
   console.log(filteredIds);
 
   // Process other messages
-  await send(`Processed message: ${activity.id}`);
+  const sendOrReplace = async (newActivity: ActivityLike) => {
+    const senderId = activity.from.id;
+
+    // checks Activity for supportet Types
+    let sendActivity: IMessageActivityInput;
+    if (typeof newActivity === "string") {
+      sendActivity = {
+        type: "message",
+        text: newActivity,
+      } satisfies IMessageActivityInput;
+    } else if (newActivity.type == "message") {
+      sendActivity = newActivity as IMessageActivityInput;
+    } else {
+      throw new Error("unsupported type");
+    }
+
+    // Checks if PreviousMessageReferences has a senderId if it does it updates the Activity
+    if (PreviousMessageReferences[senderId]) {
+      const previousMessageId = PreviousMessageReferences[senderId];
+      const test = await api.conversations.updateActivity(
+        activity.conversation.id,
+        previousMessageId,
+        sendActivity,
+      );
+      return test;
+    } else {
+      const test: SentActivity = await sendWithRef(
+        activity,
+        send,
+      )(sendActivity);
+      return test;
+    }
+  };
+
   if (data?.action) {
     switch (data.action) {
       case "nextPage":
-        return sendProductsCard(send, data.page ?? 0);
+        return sendOrReplace(await makeProductsCard(data.page ?? 0));
 
       case "selectProduct":
         if (data.productId) {
-          return sendVariantsCard(send, data.productId);
+          return sendOrReplace(await makeVariantsCard(data.productId));
         }
         break;
 
       case "filterVariants":
         if (data.productId) {
-          return sendVariantsCard(send, data.productId, data.category);
+          return sendOrReplace(
+            await makeVariantsCard(data.productId, data.category),
+          );
         }
         break;
 
@@ -107,13 +169,13 @@ app.on("message", async ({ send, activity }) => {
         return sendProductSelectionCard(send, data);
 
       case "backToProducts":
-        return sendProductsCard(send);
+        return sendOrReplace(await makeProductsCard(0));
     }
   }
 
   const text = activity.text?.trim().toLowerCase();
   if (text === "/shop") {
-    return sendProductsCard(send);
+    return sendOrReplace(await makeProductsCard());
   }
 });
 
@@ -178,13 +240,18 @@ async function buildProductsResponse(page = 0) {
   return adaptiveCardResponse(buildProductsCard(products, page));
 }
 
-async function sendProductsCard(send: SendFunction, page = 0) {
+async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
   const products = await productsControllerFindAll();
   const card = buildProductsCard(products, page) as IAdaptiveCard;
-  await send({
+  return {
     type: "message",
     attachments: [cardAttachment("adaptive", card)],
-  });
+  };
+}
+
+async function sendProductsCard(send: ConversationSendFunction, page = 0) {
+  const card = await makeProductsCard(page);
+  return await send(card);
 }
 
 async function buildVariantsResponse(productId: string, category?: string) {
@@ -200,16 +267,24 @@ async function buildVariantsResponse(productId: string, category?: string) {
   );
 }
 
+async function makeVariantsCard(
+  productId: string,
+  category?: string,
+): Promise<ActivityLike> {
+  const response = await buildVariantsResponse(productId, category);
+  return {
+    type: "message",
+    attachments: [cardAttachment("adaptive", response.value)],
+  };
+}
+
 async function sendVariantsCard(
   send: SendFunction,
   productId: string,
   category?: string,
 ) {
-  const response = await buildVariantsResponse(productId, category);
-  await send({
-    type: "message",
-    attachments: [cardAttachment("adaptive", response.value)],
-  });
+  const variants = await makeVariantsCard(productId, category);
+  return send(variants);
 }
 
 function getSelectedVariantIds(data: CardActionData) {
@@ -276,7 +351,7 @@ async function sendProductSelectionCard(
 ) {
   const response = await buildProductSelectionResponse(data);
   if (response) {
-    await send(response.value.message);
+    return send(response.value.message);
   }
 }
 
