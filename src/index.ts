@@ -172,6 +172,7 @@ app.on("message", async ({ send, activity, api }) => {
           type: "message",
           attachments: [cardAttachment("adaptive", orderResponseCard)],
         });
+        delete PreviousMessageReferences[activity.from.id];
         return sendProductSelectionCard(send, data);
 
       case "backToProducts":
