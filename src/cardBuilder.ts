@@ -1,6 +1,5 @@
 // cardBuilder.ts
 import type {
-  CreateOrderItemDTO,
   ProductDTO,
   ProductListDTO,
   ProductVariantCategoriesDTO,
@@ -80,7 +79,6 @@ function buildProductColumn(p: ProductDTO): AdaptiveCardElement {
     items: [
       {
         type: "Image",
-        url: p.imageUrl,
         size: "Large",
         style: "default",
         height: "stretch",

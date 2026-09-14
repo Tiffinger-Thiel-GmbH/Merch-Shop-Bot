@@ -1,9 +1,6 @@
 import { ManagedIdentityCredential } from "@azure/identity";
-import { cardAttachment, TokenCredentials } from "@microsoft/teams.api";
-import { App } from "@microsoft/teams.apps";
 import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
-import { DevtoolsPlugin } from "@microsoft/teams.dev";
 import welcomeCardJson from "./cards/welcomeCard.json";
 import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
 import {
@@ -18,10 +15,36 @@ import {
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
   productsControllerFindAll,
+  userControllerPutUser,
 } from "./api/merchApi";
-
+import { App, IBaseActivityContext } from "@microsoft/teams.apps";
+import {
+  ActivityLike,
+  cardAttachment,
+  ConversationReference,
+  IMessageActivity,
+  TokenCredentials,
+} from "@microsoft/teams.api";
+const orderResponseCard = orderResponseCardJson as IAdaptiveCard;
 const welcomeCard = welcomeCardJson as IAdaptiveCard;
-const ORDER_USER_ID = "9aaca58e-4ea2-4008-bfc7-2007cd91c0f1";
+
+type ConversationSendFunction = IBaseActivityContext<never, never>["send"];
+
+const PreviousMessageReferences: Record<string, string> = {};
+function sendWithRef(
+  parent: IMessageActivity,
+  send: ConversationSendFunction,
+): ConversationSendFunction {
+  const sendFunction = async (
+    activity: ActivityLike,
+    conversationRef?: ConversationReference,
+  ) => {
+    const result = await send(activity, conversationRef);
+    PreviousMessageReferences[parent.from.id] = result.id;
+    return result;
+  };
+  return sendFunction;
+}
 
 const createTokenFactory = () => {
   return async (
@@ -93,7 +116,26 @@ app.on("message", async ({ send, activity }) => {
         break;
 
       case "submitProductSelection":
-        return sendProductSelectionCard(send, data);
+        await sendOrReplace({
+          type: "message",
+          attachments: [cardAttachment("adaptive", orderResponseCard)],
+        });
+        delete PreviousMessageReferences[activity.from.id];
+        // Find User Email
+        const user = await api.conversations.getMemberById(
+          activity.conversation.id,
+          activity.from.id,
+        );
+        const name = user.name;
+        const email = user.email;
+
+        const putUser = await userControllerPutUser({
+          userName: name!,
+          userMail: email!,
+        });
+        console.log(putUser);
+
+        return sendProductSelectionCard(send, data, putUser.id); // <- pass DB id
 
       case "backToProducts":
         return sendProductsCard(send);
@@ -101,9 +143,27 @@ app.on("message", async ({ send, activity }) => {
   }
 
   const text = activity.text?.trim().toLowerCase();
-  if (text === "/shop") {
-    return sendProductsCard(send);
+  if (text === "shop") {
+    return sendOrReplace(await makeProductsCard());
   }
+});
+
+// app on submit
+app.on("card.action.submitProductSelection", async ({ activity, api }) => {
+  const data = activity.value.action.data as CardActionData;
+
+  const user = await api.conversations.getMemberById(
+    activity.conversation.id,
+    activity.from.id,
+  );
+
+  const putUser = await userControllerPutUser({
+    userName: user.name!,
+    userMail: user.email!,
+  });
+
+  const response = await buildProductSelectionResponse(data, putUser.id);
+  return response ?? undefined;
 });
 
 type CardActionData = {
@@ -230,7 +290,10 @@ function getSelectedVariantIds(data: CardActionData) {
   };
 }
 
-async function buildProductSelectionResponse(data: CardActionData) {
+async function buildProductSelectionResponse(
+  data: CardActionData,
+  userId: string, // <- must be here
+) {
   if (!data.productId) {
     return errorResponse("productId fehlt.");
   }
@@ -246,7 +309,7 @@ async function buildProductSelectionResponse(data: CardActionData) {
   }
 
   await orderControllerCreate({
-    userId: ORDER_USER_ID,
+    userId,
     items: [
       {
         productId: data.productId,
@@ -262,8 +325,9 @@ async function buildProductSelectionResponse(data: CardActionData) {
 async function sendProductSelectionCard(
   send: SendFunction,
   data: CardActionData,
+  userId: string, // <- new
 ) {
-  const response = await buildProductSelectionResponse(data);
+  const response = await buildProductSelectionResponse(data, userId); // <- forward
   if (response) {
     await send(response.value.message);
   }
@@ -290,12 +354,6 @@ app.on("card.action.filterVariants", async ({ activity }) => {
   }
 
   return buildVariantsResponse(data.productId, data.category);
-});
-
-app.on("card.action.submitProductSelection", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  const response = await buildProductSelectionResponse(data);
-  return response ?? undefined;
 });
 
 app.on("card.action.backToProducts", async () => {
