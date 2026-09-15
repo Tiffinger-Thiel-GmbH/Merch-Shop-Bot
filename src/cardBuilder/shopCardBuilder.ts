@@ -31,18 +31,18 @@ export function buildProductsCard(data: ProductListDTO, page = 0): object {
   ];
 
   const actions: AdaptiveCardElement[] = [];
+  if (page > 0) {
+    actions.push({
+      type: "Action.Submit",
+      title: "Vorherige Seite",
+      data: { action: "changePage", page: page - 1 },
+    });
+  }
   if (hasMore) {
-    if (page > 0) {
-      actions.push({
-        type: "Action.Submit",
-        title: "Vorherige Seite",
-        data: { actions: "previosPage", page: page - 1 },
-      });
-    }
     actions.push({
       type: "Action.Submit",
       title: "Nächste Seite",
-      data: { action: "nextPage", page: page + 1 },
+      data: { action: "changePage", page: page + 1 },
     });
   }
 

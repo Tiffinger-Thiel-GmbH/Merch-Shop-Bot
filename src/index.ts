@@ -220,7 +220,7 @@ app.on("message", async ({ send, activity }) => {
   console.log(data);
   if (data?.action) {
     switch (data.action) {
-      case "nextPage":
+      case "changePage":
         return sendProductsCard(send, data.page ?? 0);
 
       case "selectProduct":
