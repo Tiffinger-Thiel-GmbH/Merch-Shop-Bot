@@ -34,8 +34,15 @@ export function buildProductsCard(data: ProductListDTO, page = 0): object {
   if (hasMore) {
     actions.push({
       type: "Action.Submit",
-      title: "Weitere anzeigen",
+      title: "Nächste Seite",
       data: { action: "nextPage", page: page + 1 },
+    });
+  }
+  if (page > 1) {
+    actions.push({
+      type: "Action.Submit",
+      title: "Vorherige Seite",
+      data: { actions: "previosPage", page: page - 1 },
     });
   }
 
