@@ -126,12 +126,10 @@ app.on("message", async ({ send, activity }) => {
           activity.conversation.id,
           activity.from.id,
         );
-        const name = user.name;
-        const email = user.email;
 
         const putUser = await userControllerPutUser({
-          userName: name!,
-          userMail: email!,
+          userName: user.name,
+          userMail: user.email,
         });
         console.log(putUser);
 
