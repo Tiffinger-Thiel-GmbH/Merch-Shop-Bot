@@ -4,7 +4,7 @@ import { buildEmptyStateCard } from "./cardBuilder";
 type AdaptiveCardElement = Record<string, unknown>;
 
 const COMPACT_THRESHOLD = 6;
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 3;
 
 // ---------- Produktkarte ----------
 
@@ -32,17 +32,17 @@ export function buildProductsCard(data: ProductListDTO, page = 0): object {
 
   const actions: AdaptiveCardElement[] = [];
   if (hasMore) {
+    if (page > 0) {
+      actions.push({
+        type: "Action.Submit",
+        title: "Vorherige Seite",
+        data: { actions: "previosPage", page: page - 1 },
+      });
+    }
     actions.push({
       type: "Action.Submit",
       title: "Nächste Seite",
       data: { action: "nextPage", page: page + 1 },
-    });
-  }
-  if (page > 1) {
-    actions.push({
-      type: "Action.Submit",
-      title: "Vorherige Seite",
-      data: { actions: "previosPage", page: page - 1 },
     });
   }
 
