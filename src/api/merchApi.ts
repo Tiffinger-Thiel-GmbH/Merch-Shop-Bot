@@ -12,6 +12,7 @@ export interface ProductDTO {
   /** @nullable */
   description: string | null;
   id: string;
+  imageUrl: string;
 }
 
 export interface ProductListDTO {
@@ -184,6 +185,16 @@ export const userControllerPutUser = (
   );
 };
 
+export const assetsControllerFindOne = (
+  id: string,
+  options?: SecondParameter<typeof customInstance<Blob>>,
+) => {
+  return customInstance<Blob>(
+    { url: `/assets/${id}`, method: "GET", responseType: "blob" },
+    options,
+  );
+};
+
 export type ProductsControllerFindAllResult = NonNullable<
   Awaited<ReturnType<typeof productsControllerFindAll>>
 >;
@@ -204,4 +215,7 @@ export type ProductVariantControllerFindVariantsResult = NonNullable<
 >;
 export type UserControllerPutUserResult = NonNullable<
   Awaited<ReturnType<typeof userControllerPutUser>>
+>;
+export type AssetsControllerFindOneResult = NonNullable<
+  Awaited<ReturnType<typeof assetsControllerFindOne>>
 >;

@@ -9,7 +9,7 @@ import type {
 type AdaptiveCardElement = Record<string, unknown>;
 
 const COMPACT_THRESHOLD = 6;
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 3;
 
 // ---------- Produktkarte ----------
 
@@ -101,9 +101,7 @@ function buildProductColumn(p: ProductDTO): AdaptiveCardElement {
 export function buildVariantsCard(
   productId: string,
   categoriesData: ProductVariantCategoriesDTO,
-  _selectedCategory: string,
   variantsData: ProductVariantListDTO,
-  quantity: number,
 ): object {
   const { categories } = categoriesData;
   const { items } = variantsData;
@@ -162,7 +160,7 @@ export function buildVariantsCard(
       label: "Menge",
       min: 1,
       max: 10,
-      value: quantity,
+      value: 1,
     });
   }
 

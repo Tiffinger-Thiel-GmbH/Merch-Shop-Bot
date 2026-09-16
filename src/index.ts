@@ -22,6 +22,7 @@ import { App, IBaseActivityContext } from "@microsoft/teams.apps";
 import {
   ActivityLike,
   cardAttachment,
+  Client,
   ConversationReference,
   IMessageActivity,
   IMessageActivityInput,
@@ -29,27 +30,72 @@ import {
   TokenCredentials,
 } from "@microsoft/teams.api";
 const orderResponseCard = orderResponseCardJson as IAdaptiveCard;
-const welcomeCard = welcomeCardJson as IAdaptiveCard;
 
-type ConversationSendFunction = IBaseActivityContext<never, never>["send"];
-
+/** Save the activity reference of the message previously sent with sendWithRef as user.id -> activity.id mapping */
 const PreviousMessageReferences: Record<string, string> = {};
-function sendWithRef(
-  parent: IMessageActivity,
-  send: ConversationSendFunction,
-): ConversationSendFunction {
-  const sendFunction = async (
-    activity: ActivityLike,
-    conversationRef?: ConversationReference,
-  ) => {
-    const result = await send(activity, conversationRef);
-    PreviousMessageReferences[parent.from.id] = result.id;
-    return result;
-  };
-  return sendFunction;
+/**
+ * Replaces the previously tracked message that was sent with this function or sendWithRef.
+ * @param activity new Activity to replace the previous message with
+ * @param context message Context object
+ * @returns promise to new MessageActivity
+ */
+const sendOrReplace = async (
+  activity: ActivityLike,
+  context: IBaseActivityContext<IMessageActivity, Record<string, any>>,
+) => {
+  const {
+    activity: { conversation, from: messageSender },
+    api,
+  } = context;
+  const senderId = messageSender.id;
+
+  // checks Activity for supportet Types
+  let sendActivity: IMessageActivityInput;
+  if (typeof activity === "string") {
+    sendActivity = {
+      type: "message",
+      text: activity,
+    } satisfies IMessageActivityInput;
+  } else if (activity.type == "message") {
+    sendActivity = activity as IMessageActivityInput;
+  } else {
+    throw new Error("unsupported type");
+  }
+
+  // Checks if PreviousMessageReferences has a senderId if it does it updates the Activity
+  if (PreviousMessageReferences[senderId]) {
+    const previousMessageId = PreviousMessageReferences[senderId];
+    const test = await api.conversations.updateActivity(
+      conversation.id,
+      previousMessageId,
+      sendActivity,
+    );
+    return test;
+  } else {
+    const test: SentActivity = await sendWithRef(sendActivity, context);
+    return test;
+  }
+};
+/**
+ * Send a message in to the user and track the activity id for later reuse/manipulation
+ * @param activity the activity to send
+ * @param context the conversation
+ * @returns
+ */
+async function sendWithRef(
+  activity: ActivityLike,
+  context: IBaseActivityContext<IMessageActivity, Record<string, any>>,
+): Promise<SentActivity> {
+  const {
+    activity: { from: messageSender },
+    send,
+  } = context;
+  const result = await send(activity);
+  PreviousMessageReferences[messageSender.id] = result.id;
+  return result;
 }
 
-const createTokenFactory = () => {
+const microsoftLoginTokenFactory = () => {
   return async (
     scope: string | string[],
     tenantId?: string,
@@ -69,7 +115,7 @@ const createTokenFactory = () => {
 // Configure authentication using TokenCredentials
 const tokenCredentials: TokenCredentials = {
   clientId: process.env.CLIENT_ID || "",
-  token: createTokenFactory(),
+  token: microsoftLoginTokenFactory(),
 };
 
 // Use managed identity in cloud environment, otherwise use devtools plugin for local development
@@ -86,20 +132,14 @@ const app = new App({
 
 app.on("install.add", async ({ send }) => {
   const greeting = `
-  Hi this app handles:<br>
-    1. Basic message handling - echoing back what you say<br>
-    2. Link unfurling - creating preview cards when you paste URLs<br>
-    3. Message extension commands - handling card creation.
-  `;
+  Wilkommen im Tiffinger & Thiel Merch-Shop!
+  Stell dir bitte vor, es würde im Hintergrund die Ocarina of Time Shop Musik laufen :)
+  Wenn du die Musik in deinem Kopf hören kannst, schreibe "shop", um Merch zu ordern.`;
   await send(greeting);
-  const card = welcomeCard;
-  await send({
-    type: "message",
-    attachments: [cardAttachment("adaptive", card)],
-  });
 });
 
-app.on("message", async ({ send, activity, api }) => {
+app.on("message", async (context) => {
+  const { send, activity, api } = context;
   const data = getCardActionData(activity.value);
   // Define the ID(s) to filter out (e.g., your own previous messages)
   const filteredIds = ["message-id-to-ignore-1", "message-id-to-ignore-2"];
@@ -111,48 +151,15 @@ app.on("message", async ({ send, activity, api }) => {
   console.log(filteredIds);
 
   // Process other messages
-  const sendOrReplace = async (newActivity: ActivityLike) => {
-    const senderId = activity.from.id;
-
-    // checks Activity for supportet Types
-    let sendActivity: IMessageActivityInput;
-    if (typeof newActivity === "string") {
-      sendActivity = {
-        type: "message",
-        text: newActivity,
-      } satisfies IMessageActivityInput;
-    } else if (newActivity.type == "message") {
-      sendActivity = newActivity as IMessageActivityInput;
-    } else {
-      throw new Error("unsupported type");
-    }
-
-    // Checks if PreviousMessageReferences has a senderId if it does it updates the Activity
-    if (PreviousMessageReferences[senderId]) {
-      const previousMessageId = PreviousMessageReferences[senderId];
-      const test = await api.conversations.updateActivity(
-        activity.conversation.id,
-        previousMessageId,
-        sendActivity,
-      );
-      return test;
-    } else {
-      const test: SentActivity = await sendWithRef(
-        activity,
-        send,
-      )(sendActivity);
-      return test;
-    }
-  };
 
   if (data?.action) {
     switch (data.action) {
       case "nextPage":
-        return sendOrReplace(await makeProductsCard(data.page ?? 0));
+        return sendOrReplace(await makeProductsCard(data.page ?? 0), context);
 
       case "selectProduct":
         if (data.productId) {
-          return sendOrReplace(await makeVariantsCard(data.productId));
+          return sendOrReplace(await makeVariantsCard(data.productId), context);
         }
         break;
 
@@ -160,16 +167,19 @@ app.on("message", async ({ send, activity, api }) => {
         if (data.productId) {
           return sendOrReplace(
             await makeVariantsCard(data.productId, data.category),
+            context,
           );
         }
         break;
 
       case "submitProductSelection":
-        await sendOrReplace({
-          type: "message",
-          attachments: [cardAttachment("adaptive", orderResponseCard)],
-        });
-        delete PreviousMessageReferences[activity.from.id];
+        await sendOrReplace(
+          {
+            type: "message",
+            attachments: [cardAttachment("adaptive", orderResponseCard)],
+          },
+          context,
+        );
         // Find User Email
         const user = await api.conversations.getMemberById(
           activity.conversation.id,
@@ -184,35 +194,29 @@ app.on("message", async ({ send, activity, api }) => {
         });
         console.log(putUser);
 
-        return sendProductSelectionCard(send, data, putUser.id); // <- pass DB id
+        try {
+          const result = sendProductSelectionCard(send, data, putUser.id); // <- pass
+          delete PreviousMessageReferences[activity.from.id];
+          return result;
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            const message = error.message;
+            return sendOrReplace(
+              await makeVariantsCard(data.productId!, data.category, message),
+              context,
+            );
+          }
+        }
 
       case "backToProducts":
-        return sendOrReplace(await makeProductsCard(0));
+        return sendOrReplace(await makeProductsCard(0), context);
     }
   }
 
   const text = activity.text?.trim().toLowerCase();
   if (text === "shop") {
-    return sendOrReplace(await makeProductsCard());
+    return sendOrReplace(await makeProductsCard(), context);
   }
-});
-
-// app on submit
-app.on("card.action.submitProductSelection", async ({ activity, api }) => {
-  const data = activity.value.action.data as CardActionData;
-
-  const user = await api.conversations.getMemberById(
-    activity.conversation.id,
-    activity.from.id,
-  );
-
-  const putUser = await userControllerPutUser({
-    userName: user.name!,
-    userMail: user.email!,
-  });
-
-  const response = await buildProductSelectionResponse(data, putUser.id);
-  return response ?? undefined;
 });
 
 type CardActionData = {
@@ -271,11 +275,6 @@ function errorResponse(message: string, statusCode: 400 | 500 = 400) {
   };
 }
 
-async function buildProductsResponse(page = 0) {
-  const products = await productsControllerFindAll();
-  return adaptiveCardResponse(buildProductsCard(products, page));
-}
-
 async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
   const products = await productsControllerFindAll();
   const card = buildProductsCard(products, page) as IAdaptiveCard;
@@ -283,11 +282,6 @@ async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
     type: "message",
     attachments: [cardAttachment("adaptive", card)],
   };
-}
-
-async function sendProductsCard(send: ConversationSendFunction, page = 0) {
-  const card = await makeProductsCard(page);
-  return await send(card);
 }
 
 async function buildVariantsResponse(productId: string, category?: string) {
@@ -299,28 +293,20 @@ async function buildVariantsResponse(productId: string, category?: string) {
   );
 
   return adaptiveCardResponse(
-    buildVariantsCard(productId, categories, category ?? "", variants),
+    buildVariantsCard(productId, categories, variants),
   );
 }
 
 async function makeVariantsCard(
   productId: string,
   category?: string,
+  message?: string,
 ): Promise<ActivityLike> {
   const response = await buildVariantsResponse(productId, category);
   return {
     type: "message",
     attachments: [cardAttachment("adaptive", response.value)],
   };
-}
-
-async function sendVariantsCard(
-  send: SendFunction,
-  productId: string,
-  category?: string,
-) {
-  const variants = await makeVariantsCard(productId, category);
-  return send(variants);
 }
 
 function getSelectedVariantIds(data: CardActionData) {
@@ -390,135 +376,8 @@ async function sendProductSelectionCard(
   userId: string, // <- new
 ) {
   const response = await buildProductSelectionResponse(data, userId); // <- forward
-  if (response) {
-    return send(response.value.message);
-  }
+  return response && send(response.value.message);
 }
-
-app.on("card.action.nextPage", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  return buildProductsResponse(data.page ?? 0);
-});
-
-app.on("card.action.selectProduct", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  if (!data.productId) {
-    return errorResponse("productId fehlt.");
-  }
-
-  return buildVariantsResponse(data.productId);
-});
-
-app.on("card.action.filterVariants", async ({ activity }) => {
-  const data = activity.value.action.data as CardActionData;
-  if (!data.productId) {
-    return errorResponse("productId fehlt.");
-  }
-
-  return buildVariantsResponse(data.productId, data.category);
-});
-
-app.on("card.action.backToProducts", async () => {
-  return buildProductsResponse();
-});
-
-// :snippet-start: message-ext-query-link
-app.on("message.ext.query-link", async ({ activity }) => {
-  const { url } = activity.value;
-
-  if (!url) {
-    return { status: 400 };
-  }
-
-  const { card, thumbnail } = createLinkUnfurlCard(url);
-  const attachment = {
-    ...cardAttachment("adaptive", card), // expanded card in the compose box...
-    preview: cardAttachment("thumbnail", thumbnail), //preview card in the compose box...
-  };
-
-  return {
-    composeExtension: {
-      type: "result",
-      attachmentLayout: "list",
-      attachments: [attachment],
-    },
-  };
-});
-// :snippet-end: message-ext-query-link
-// :snippet-start: message-ext-submit
-app.on("message.ext.submit", async ({ activity }) => {
-  const { commandId } = activity.value;
-  let card: IAdaptiveCard;
-
-  if (commandId === "createCard") {
-    // activity.value.commandContext == "compose"
-    card = createCard(activity.value.data);
-  } else if (
-    commandId === "getMessageDetails" &&
-    activity.value.messagePayload
-  ) {
-    // activity.value.commandContext == "message"
-    card = createMessageDetailsCard(activity.value.messagePayload);
-  } else {
-    throw new Error(`Unknown commandId: ${commandId}`);
-  }
-
-  return {
-    composeExtension: {
-      type: "result",
-      attachmentLayout: "list",
-      attachments: [cardAttachment("adaptive", card)],
-    },
-  };
-});
-// :snippet-end: message-ext-submit
-
-// :snippet-start: message-ext-open
-app.on("message.ext.open", async ({ activity, api }) => {
-  const conversationId = activity.conversation.id;
-  const members = await api.conversations.members(conversationId).get();
-  const card = createConversationMembersCard(members);
-
-  return {
-    task: {
-      type: "continue",
-      value: {
-        title: "Conversation members",
-        height: "small",
-        width: "small",
-        card: cardAttachment("adaptive", card),
-      },
-    },
-  };
-});
-// :snippet-end: message-ext-open
-
-// :snippet-start: message-ext-query
-app.on("message.ext.query", async ({ activity }) => {
-  const { commandId } = activity.value;
-  const searchQuery = activity.value.parameters![0].value;
-
-  if (commandId == "searchQuery") {
-    const cards = await createDummyCards(searchQuery);
-    const attachments = cards.map(({ card, thumbnail }) => {
-      return {
-        ...cardAttachment("adaptive", card), // expanded card in the compose box...
-        preview: cardAttachment("thumbnail", thumbnail), // preview card in the compose box...
-      };
-    });
-
-    return {
-      composeExtension: {
-        type: "result",
-        attachmentLayout: "list",
-        attachments: attachments,
-      },
-    };
-  }
-
-  return { status: 400 };
-});
-// :snippet-end: message-ext-query
 
 (async () => {
   await app.start();
