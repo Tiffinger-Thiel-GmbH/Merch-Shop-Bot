@@ -12,7 +12,6 @@ export interface ProductDTO {
   /** @nullable */
   description: string | null;
   id: string;
-  imageUrl: string;
 }
 
 export interface ProductListDTO {
@@ -59,6 +58,20 @@ export interface OrderDTO {
   items: OrderItemDTO[];
 }
 
+export type UpdateOrderStatusDTOStatus =
+  (typeof UpdateOrderStatusDTOStatus)[keyof typeof UpdateOrderStatusDTOStatus];
+
+export const UpdateOrderStatusDTOStatus = {
+  PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
+  CANCELLED: "CANCELLED",
+  READY: "READY",
+} as const;
+
+export interface UpdateOrderStatusDTO {
+  status: UpdateOrderStatusDTOStatus;
+}
+
 export interface ProductVariantCategoriesDTO {
   categories: string[];
 }
@@ -71,6 +84,12 @@ export interface ProductVariantOutgoingDTO {
 
 export interface ProductVariantListDTO {
   items: ProductVariantOutgoingDTO[];
+}
+
+export interface UpsertUserDto {
+  userMail: string;
+  userName: string;
+  userId?: string;
 }
 
 export type ProductVariantControllerFindVariantsParams = {
@@ -88,12 +107,12 @@ export const productsControllerFindAll = (
   );
 };
 
-export const productsControllerFindImageUrl = (
+export const productsControllerFindOneById = (
   id: string,
-  options?: SecondParameter<typeof customInstance<void>>,
+  options?: SecondParameter<typeof customInstance<ProductDTO>>,
 ) => {
-  return customInstance<void>(
-    { url: `/product/${id}/image-url`, method: "GET" },
+  return customInstance<ProductDTO>(
+    { url: `/product/${id}`, method: "GET" },
     options,
   );
 };
@@ -108,6 +127,22 @@ export const orderControllerCreate = (
       method: "POST",
       headers: { "Content-Type": "application/json" },
       data: createOrderDTO,
+    },
+    options,
+  );
+};
+
+export const orderControllerUpdateStatus = (
+  id: string,
+  updateOrderStatusDTO: BodyType<UpdateOrderStatusDTO>,
+  options?: SecondParameter<typeof customInstance<OrderDTO>>,
+) => {
+  return customInstance<OrderDTO>(
+    {
+      url: `/orders/${id}/status`,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      data: updateOrderStatusDTO,
     },
     options,
   );
@@ -134,18 +169,39 @@ export const productVariantControllerFindVariants = (
   );
 };
 
+export const userControllerPutUser = (
+  upsertUserDto: BodyType<UpsertUserDto>,
+  options?: SecondParameter<typeof customInstance<void>>,
+) => {
+  return customInstance<void>(
+    {
+      url: `/user`,
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      data: upsertUserDto,
+    },
+    options,
+  );
+};
+
 export type ProductsControllerFindAllResult = NonNullable<
   Awaited<ReturnType<typeof productsControllerFindAll>>
 >;
-export type ProductsControllerFindImageUrlResult = NonNullable<
-  Awaited<ReturnType<typeof productsControllerFindImageUrl>>
+export type ProductsControllerFindOneByIdResult = NonNullable<
+  Awaited<ReturnType<typeof productsControllerFindOneById>>
 >;
 export type OrderControllerCreateResult = NonNullable<
   Awaited<ReturnType<typeof orderControllerCreate>>
+>;
+export type OrderControllerUpdateStatusResult = NonNullable<
+  Awaited<ReturnType<typeof orderControllerUpdateStatus>>
 >;
 export type ProductVariantCategoryControllerFindCategoriesResult = NonNullable<
   Awaited<ReturnType<typeof productVariantCategoryControllerFindCategories>>
 >;
 export type ProductVariantControllerFindVariantsResult = NonNullable<
   Awaited<ReturnType<typeof productVariantControllerFindVariants>>
+>;
+export type UserControllerPutUserResult = NonNullable<
+  Awaited<ReturnType<typeof userControllerPutUser>>
 >;
