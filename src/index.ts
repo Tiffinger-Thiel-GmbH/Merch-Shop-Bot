@@ -2,15 +2,7 @@ import { ManagedIdentityCredential } from "@azure/identity";
 import orderResponseCardJson from "./cards/orderResponse.json";
 import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
-import welcomeCardJson from "./cards/welcomeCard.json";
 import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
-import {
-  createCard,
-  createConversationMembersCard,
-  createDummyCards,
-  createLinkUnfurlCard,
-  createMessageDetailsCard,
-} from "./card";
 import {
   orderControllerCreate,
   productVariantCategoryControllerFindCategories,
@@ -22,10 +14,9 @@ import { App, IBaseActivityContext } from "@microsoft/teams.apps";
 import {
   ActivityLike,
   cardAttachment,
-  Client,
-  ConversationReference,
   IMessageActivity,
   IMessageActivityInput,
+  MessageActivityInput,
   SentActivity,
   TokenCredentials,
 } from "@microsoft/teams.api";
@@ -50,7 +41,7 @@ const sendOrReplace = async (
   const senderId = messageSender.id;
 
   // checks Activity for supportet Types
-  let sendActivity: IMessageActivityInput;
+  let sendActivity: IMessageActivityInput | IAdaptiveCard;
   if (typeof activity === "string") {
     sendActivity = {
       type: "message",
@@ -58,22 +49,25 @@ const sendOrReplace = async (
     } satisfies IMessageActivityInput;
   } else if (activity.type == "message") {
     sendActivity = activity as IMessageActivityInput;
+  } else if (activity.type == "AdaptiveCard") {
+    sendActivity = new MessageActivityInput().addCard(
+      "adaptive",
+      activity as IAdaptiveCard,
+    );
   } else {
-    throw new Error("unsupported type");
+    throw new Error("unsupported type:" + (activity?.type ?? "???"));
   }
 
   // Checks if PreviousMessageReferences has a senderId if it does it updates the Activity
   if (PreviousMessageReferences[senderId]) {
     const previousMessageId = PreviousMessageReferences[senderId];
-    const test = await api.conversations.updateActivity(
+    await api.conversations.updateActivity(
       conversation.id,
       previousMessageId,
       sendActivity,
     );
-    return test;
   } else {
-    const test: SentActivity = await sendWithRef(sendActivity, context);
-    return test;
+    await sendWithRef(sendActivity, context);
   }
 };
 /**
@@ -138,7 +132,7 @@ app.on("install.add", async ({ send }) => {
   await send(greeting);
 });
 
-app.on("message", async (context) => {
+app.on("message", async (context): Promise<void> => {
   const { send, activity, api } = context;
   const data = getCardActionData(activity.value);
   // Define the ID(s) to filter out (e.g., your own previous messages)
@@ -173,13 +167,6 @@ app.on("message", async (context) => {
         break;
 
       case "submitProductSelection":
-        await sendOrReplace(
-          {
-            type: "message",
-            attachments: [cardAttachment("adaptive", orderResponseCard)],
-          },
-          context,
-        );
         // Find User Email
         const user = await api.conversations.getMemberById(
           activity.conversation.id,
@@ -195,18 +182,21 @@ app.on("message", async (context) => {
         console.log(putUser);
 
         try {
-          const result = sendProductSelectionCard(send, data, putUser.id); // <- pass
+          const newActivity = await buildProductSelectionResponse(
+            data,
+            putUser.id,
+          );
+          await sendOrReplace(newActivity, context);
           delete PreviousMessageReferences[activity.from.id];
-          return result;
+          return;
         } catch (error: unknown) {
-          if (error instanceof Error) {
-            const message = error.message;
-            return sendOrReplace(
-              await makeVariantsCard(data.productId!, data.category, message),
-              context,
-            );
-          }
+          console.log(error);
+          const card = errorResponse(
+            error instanceof Error ? error.message : "Unbekannter Fehler",
+          );
+          send(card.card);
         }
+        break;
 
       case "backToProducts":
         return sendOrReplace(await makeProductsCard(0), context);
@@ -215,7 +205,7 @@ app.on("message", async (context) => {
 
   const text = activity.text?.trim().toLowerCase();
   if (text === "shop") {
-    return sendOrReplace(await makeProductsCard(), context);
+    await sendWithRef(await makeProductsCard(), context);
   }
 });
 
@@ -232,8 +222,6 @@ type VariantInputId = {
   category: string;
   inputId: string;
 };
-
-type SendFunction = (activity: Parameters<typeof app.send>[1]) => Promise<any>;
 
 function getCardActionData(value: unknown): CardActionData | undefined {
   if (!value || typeof value !== "object") {
@@ -261,18 +249,22 @@ function adaptiveCardResponse(card: object) {
 }
 
 function errorResponse(message: string, statusCode: 400 | 500 = 400) {
-  return {
-    statusCode,
-    type: "application/vnd.microsoft.error" as const,
-    value: {
-      code: "BadRequest",
-      message,
-      innerHttpError: {
-        statusCode,
-        body: { message },
+  const card: IAdaptiveCard = {
+    type: "AdaptiveCard",
+    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+    version: "1.4",
+    body: [
+      {
+        type: "TextBlock",
+        text: message,
+        weight: "Bolder",
+        color: "Attention",
+        wrap: true,
       },
-    },
+    ],
   };
+
+  return { statusCode, card };
 }
 
 async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
@@ -300,7 +292,6 @@ async function buildVariantsResponse(productId: string, category?: string) {
 async function makeVariantsCard(
   productId: string,
   category?: string,
-  message?: string,
 ): Promise<ActivityLike> {
   const response = await buildVariantsResponse(productId, category);
   return {
@@ -340,43 +331,42 @@ function getSelectedVariantIds(data: CardActionData) {
 
 async function buildProductSelectionResponse(
   data: CardActionData,
-  userId: string, // <- must be here
+  userId: string,
 ) {
   if (!data.productId) {
-    return errorResponse("productId fehlt.");
+    throw new Error("productId fehlt.");
   }
 
   const { selected, missing } = getSelectedVariantIds(data);
   if (missing.length > 0) {
-    return errorResponse(`Bitte auswählen: ${missing.join(", ")}.`);
+    throw new Error(`Bitte auswählen: ${missing.join(", ")}.`);
   }
 
   const productVariantIds = selected.map((item) => item.productVariantId);
   if (productVariantIds.length === 0) {
-    return errorResponse("Keine Varianten ausgewählt.");
+    throw new Error("Keine Varianten ausgewählt.");
   }
 
-  await orderControllerCreate({
-    userId,
-    items: [
-      {
-        productId: data.productId,
-        productVariantId: productVariantIds,
-        quantity: 1,
-      },
-    ],
-  });
+  try {
+    await orderControllerCreate({
+      userId,
+      items: [
+        {
+          productId: data.productId,
+          productVariantId: productVariantIds,
+          quantity: 1,
+        },
+      ],
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unbekannter Fehler bei der Bestellung.";
+    throw new Error(message);
+  }
 
-  return null;
-}
-
-async function sendProductSelectionCard(
-  send: SendFunction,
-  data: CardActionData,
-  userId: string, // <- new
-) {
-  const response = await buildProductSelectionResponse(data, userId); // <- forward
-  return response && send(response.value.message);
+  return orderResponseCard;
 }
 
 (async () => {

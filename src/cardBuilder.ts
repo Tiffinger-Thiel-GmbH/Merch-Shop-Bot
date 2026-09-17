@@ -9,7 +9,7 @@ import type {
 type AdaptiveCardElement = Record<string, unknown>;
 
 const COMPACT_THRESHOLD = 6;
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 12;
 
 // ---------- Produktkarte ----------
 
@@ -83,6 +83,7 @@ function buildProductColumn(p: ProductDTO): AdaptiveCardElement {
         style: "default",
         height: "stretch",
         horizontalAlignment: "Center",
+        url: p.imageUrl,
       },
       {
         type: "TextBlock",
