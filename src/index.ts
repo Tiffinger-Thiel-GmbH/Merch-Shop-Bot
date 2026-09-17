@@ -268,11 +268,6 @@ function errorResponse(message: string, statusCode: 400 | 500 = 400) {
   return { statusCode, card };
 }
 
-async function buildProductsResponse(page = 0) {
-  const products = await productsControllerFindAll();
-  return adaptiveCardResponse(buildProductsCard(products, page));
-}
-
 async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
   const products = await productsControllerFindAll();
   const card = buildProductsCard(products, page) as IAdaptiveCard;
