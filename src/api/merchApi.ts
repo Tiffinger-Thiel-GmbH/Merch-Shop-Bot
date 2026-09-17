@@ -58,6 +58,20 @@ export interface OrderDTO {
   items: OrderItemDTO[];
 }
 
+export type UpdateOrderStatusDTOStatus =
+  (typeof UpdateOrderStatusDTOStatus)[keyof typeof UpdateOrderStatusDTOStatus];
+
+export const UpdateOrderStatusDTOStatus = {
+  PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
+  CANCELLED: "CANCELLED",
+  READY: "READY",
+} as const;
+
+export interface UpdateOrderStatusDTO {
+  status: UpdateOrderStatusDTOStatus;
+}
+
 export interface ProductVariantCategoriesDTO {
   categories: string[];
 }
@@ -70,6 +84,18 @@ export interface ProductVariantOutgoingDTO {
 
 export interface ProductVariantListDTO {
   items: ProductVariantOutgoingDTO[];
+}
+
+export interface UpsertUserDto {
+  userMail: string;
+  userName: string;
+}
+
+export interface UserDTO {
+  name: string;
+  id: string;
+  email: string;
+  createdAt: string;
 }
 
 export type ProductVariantControllerFindVariantsParams = {
@@ -112,6 +138,22 @@ export const orderControllerCreate = (
   );
 };
 
+export const orderControllerUpdateStatus = (
+  id: string,
+  updateOrderStatusDTO: BodyType<UpdateOrderStatusDTO>,
+  options?: SecondParameter<typeof customInstance<OrderDTO>>,
+) => {
+  return customInstance<OrderDTO>(
+    {
+      url: `/orders/${id}/status`,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      data: updateOrderStatusDTO,
+    },
+    options,
+  );
+};
+
 export const productVariantCategoryControllerFindCategories = (
   productId: string,
   options?: SecondParameter<typeof customInstance<ProductVariantCategoriesDTO>>,
@@ -133,6 +175,31 @@ export const productVariantControllerFindVariants = (
   );
 };
 
+export const userControllerPutUser = (
+  upsertUserDto: BodyType<UpsertUserDto>,
+  options?: SecondParameter<typeof customInstance<UserDTO>>,
+) => {
+  return customInstance<UserDTO>(
+    {
+      url: `/user`,
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      data: upsertUserDto,
+    },
+    options,
+  );
+};
+
+export const assetsControllerFindOne = (
+  id: string,
+  options?: SecondParameter<typeof customInstance<Blob>>,
+) => {
+  return customInstance<Blob>(
+    { url: `/assets/${id}`, method: "GET", responseType: "blob" },
+    options,
+  );
+};
+
 export type ProductsControllerFindAllResult = NonNullable<
   Awaited<ReturnType<typeof productsControllerFindAll>>
 >;
@@ -142,9 +209,18 @@ export type ProductsControllerFindOneByIdResult = NonNullable<
 export type OrderControllerCreateResult = NonNullable<
   Awaited<ReturnType<typeof orderControllerCreate>>
 >;
+export type OrderControllerUpdateStatusResult = NonNullable<
+  Awaited<ReturnType<typeof orderControllerUpdateStatus>>
+>;
 export type ProductVariantCategoryControllerFindCategoriesResult = NonNullable<
   Awaited<ReturnType<typeof productVariantCategoryControllerFindCategories>>
 >;
 export type ProductVariantControllerFindVariantsResult = NonNullable<
   Awaited<ReturnType<typeof productVariantControllerFindVariants>>
+>;
+export type UserControllerPutUserResult = NonNullable<
+  Awaited<ReturnType<typeof userControllerPutUser>>
+>;
+export type AssetsControllerFindOneResult = NonNullable<
+  Awaited<ReturnType<typeof assetsControllerFindOne>>
 >;

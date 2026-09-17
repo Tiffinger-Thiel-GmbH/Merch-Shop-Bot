@@ -1,0 +1,16 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "✅ Bestellung versendet",
+      "size": "ExtraLarge",
+      "weight": "Bolder",
+      "color": "Good",
+      "wrap": true,
+      "horizontalAlignment": "Center"
+    }
+  ]
+}

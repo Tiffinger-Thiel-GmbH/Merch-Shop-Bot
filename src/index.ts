@@ -1,30 +1,95 @@
 import { ManagedIdentityCredential } from "@azure/identity";
-import { cardAttachment, TokenCredentials } from "@microsoft/teams.api";
-import { App } from "@microsoft/teams.apps";
+import orderResponseCardJson from "./cards/orderResponse.json";
 import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
-import { DevtoolsPlugin } from "@microsoft/teams.dev";
-
-import {
-  createCard,
-  createConversationMembersCard,
-  createDummyCards,
-  createLinkUnfurlCard,
-  createMessageDetailsCard,
-} from "./card";
+import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
 import {
   orderControllerCreate,
   productsControllerFindAll,
-  productsControllerFindOneById,
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
+  userControllerPutUser,
 } from "./api/merchApi";
-import { buildProductsCard } from "./cardBuilder/shopCardBuilder";
-import { buildVariantsCard } from "./cardBuilder/variantCardBuilder";
+import { App, IBaseActivityContext } from "@microsoft/teams.apps";
+import {
+  ActivityLike,
+  cardAttachment,
+  IMessageActivity,
+  IMessageActivityInput,
+  MessageActivityInput,
+  SentActivity,
+  TokenCredentials,
+} from "@microsoft/teams.api";
+const orderResponseCard = orderResponseCardJson as IAdaptiveCard;
 
-const ORDER_USER_ID = "9aaca58e-4ea2-4008-bfc7-2007cd91c0f1";
+/** Save the activity reference of the message previously sent with sendWithRef as user.id -> activity.id mapping */
+const PreviousMessageReferences: Record<string, string> = {};
+/**
+ * Replaces the previously tracked message that was sent with this function or sendWithRef.
+ * @param activity new Activity to replace the previous message with
+ * @param context message Context object
+ * @returns promise to new MessageActivity
+ */
+const sendOrReplace = async (
+  activity: ActivityLike,
+  context: IBaseActivityContext<IMessageActivity, Record<string, any>>,
+) => {
+  const {
+    activity: { conversation, from: messageSender },
+    api,
+  } = context;
+  const senderId = messageSender.id;
 
-const createTokenFactory = () => {
+  // checks Activity for supportet Types
+  let sendActivity: IMessageActivityInput | IAdaptiveCard;
+  if (typeof activity === "string") {
+    sendActivity = {
+      type: "message",
+      text: activity,
+    } satisfies IMessageActivityInput;
+  } else if (activity.type == "message") {
+    sendActivity = activity as IMessageActivityInput;
+  } else if (activity.type == "AdaptiveCard") {
+    sendActivity = new MessageActivityInput().addCard(
+      "adaptive",
+      activity as IAdaptiveCard,
+    );
+  } else {
+    throw new Error("unsupported type:" + (activity?.type ?? "???"));
+  }
+
+  // Checks if PreviousMessageReferences has a senderId if it does it updates the Activity
+  if (PreviousMessageReferences[senderId]) {
+    const previousMessageId = PreviousMessageReferences[senderId];
+    await api.conversations.updateActivity(
+      conversation.id,
+      previousMessageId,
+      sendActivity,
+    );
+  } else {
+    await sendWithRef(sendActivity, context);
+  }
+};
+/**
+ * Send a message in to the user and track the activity id for later reuse/manipulation
+ * @param activity the activity to send
+ * @param context the conversation
+ * @returns
+ */
+async function sendWithRef(
+  activity: ActivityLike,
+  context: IBaseActivityContext<IMessageActivity, Record<string, any>>,
+): Promise<SentActivity> {
+  const {
+    activity: { from: messageSender },
+    send,
+  } = context;
+  const result = await send(activity);
+  PreviousMessageReferences[messageSender.id] = result.id;
+  return result;
+}
+
+const microsoftLoginTokenFactory = () => {
   return async (
     scope: string | string[],
     tenantId?: string,
@@ -44,14 +109,14 @@ const createTokenFactory = () => {
 // Configure authentication using TokenCredentials
 const tokenCredentials: TokenCredentials = {
   clientId: process.env.CLIENT_ID || "",
-  token: createTokenFactory(),
+  token: microsoftLoginTokenFactory(),
 };
 
 // Use managed identity in cloud environment, otherwise use devtools plugin for local development
 const options =
   process.env.BOT_TYPE === "UserAssignedMsi"
     ? { ...tokenCredentials }
-    : { plugins: [new DevtoolsPlugin()] };
+    : { plugins: [] };
 
 const app = new App({
   ...options,
@@ -61,15 +126,88 @@ const app = new App({
 
 app.on("install.add", async ({ send }) => {
   const greeting = `
-  Hi this app handles:<br>
-    1. Basic message handling - echoing back what you say<br>
-    2. Link unfurling - creating preview cards when you paste URLs<br>
-    3. Message extension commands - handling card creation.
-  `;
+  Wilkommen im Tiffinger & Thiel Merch-Shop!
+  Stell dir bitte vor, es würde im Hintergrund die Ocarina of Time Shop Musik laufen :)
+  Wenn du die Musik in deinem Kopf hören kannst, schreibe "shop", um Merch zu ordern.`;
   await send(greeting);
 });
 
-// --- Activity handler ---
+app.on("message", async (context): Promise<void> => {
+  const { send, activity, api } = context;
+  const data = getCardActionData(activity.value);
+  // Define the ID(s) to filter out (e.g., your own previous messages)
+  const filteredIds = ["message-id-to-ignore-1", "message-id-to-ignore-2"];
+
+  // Check if the incoming message ID is in the filter list
+  if (filteredIds.includes(activity.id)) {
+    return; // Ignore this message
+  }
+  console.log(filteredIds);
+
+  // Process other messages
+
+  if (data?.action) {
+    switch (data.action) {
+      case "nextPage":
+        return sendOrReplace(await makeProductsCard(data.page ?? 0), context);
+
+      case "selectProduct":
+        if (data.productId) {
+          return sendOrReplace(await makeVariantsCard(data.productId), context);
+        }
+        break;
+
+      case "filterVariants":
+        if (data.productId) {
+          return sendOrReplace(
+            await makeVariantsCard(data.productId, data.category),
+            context,
+          );
+        }
+        break;
+
+      case "submitProductSelection":
+        // Find User Email
+        const user = await api.conversations.getMemberById(
+          activity.conversation.id,
+          activity.from.id,
+        );
+        const name = user.name;
+        const email = user.email;
+
+        const putUser = await userControllerPutUser({
+          userName: name!,
+          userMail: email!,
+        });
+        console.log(putUser);
+
+        try {
+          const newActivity = await buildProductSelectionResponse(
+            data,
+            putUser.id,
+          );
+          await sendOrReplace(newActivity, context);
+          delete PreviousMessageReferences[activity.from.id];
+          return;
+        } catch (error: unknown) {
+          console.log(error);
+          const card = errorResponse(
+            error instanceof Error ? error.message : "Unbekannter Fehler",
+          );
+          send(card.card);
+        }
+        break;
+
+      case "backToProducts":
+        return sendOrReplace(await makeProductsCard(0), context);
+    }
+  }
+
+  const text = activity.text?.trim().toLowerCase();
+  if (text === "shop") {
+    await sendWithRef(await makeProductsCard(), context);
+  }
+});
 
 // Defining Card Actions
 type CardActionData = {
@@ -86,12 +224,7 @@ type VariantInputId = {
   inputId: string;
 };
 
-type SendFunction = (activity: Parameters<typeof app.send>[1]) => Promise<any>;
-
-// --- Funktionen für app.on("message") ---
-
-// function for getting the action used by a button or click
-function getCardAction(value: unknown): CardActionData | undefined {
+function getCardActionData(value: unknown): CardActionData | undefined {
   if (!value || typeof value !== "object") {
     return undefined;
   }
@@ -108,25 +241,43 @@ function getCardAction(value: unknown): CardActionData | undefined {
   return value as CardActionData;
 }
 
-// function used for sending the Product Card
-async function sendProductsCard(send: SendFunction, page = 0) {
-  const products = await productsControllerFindAll();
-  const card = buildProductsCard(products, page) as IAdaptiveCard;
-  await send({
-    type: "message",
-    attachments: [cardAttachment("adaptive", card)],
-  });
+function adaptiveCardResponse(card: object) {
+  return {
+    statusCode: 200 as const,
+    type: "application/vnd.microsoft.card.adaptive" as const,
+    value: card as IAdaptiveCard,
+  };
 }
 
-// function used for sending the Variants Card
-async function sendVariantsCard(
-  send: SendFunction,
-  productId: string,
-  category?: string,
-  quantity = 1,
-) {
-  // function for finding out the name of a product
-  const product = await productsControllerFindOneById(productId);
+function errorResponse(message: string, statusCode: 400 | 500 = 400) {
+  const card: IAdaptiveCard = {
+    type: "AdaptiveCard",
+    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+    version: "1.4",
+    body: [
+      {
+        type: "TextBlock",
+        text: message,
+        weight: "Bolder",
+        color: "Attention",
+        wrap: true,
+      },
+    ],
+  };
+
+  return { statusCode, card };
+}
+
+async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
+  const products = await productsControllerFindAll();
+  const card = buildProductsCard(products, page) as IAdaptiveCard;
+  return {
+    type: "message",
+    attachments: [cardAttachment("adaptive", card)],
+  };
+}
+
+async function buildVariantsResponse(productId: string, category?: string) {
   const categories =
     await productVariantCategoryControllerFindCategories(productId);
   const variants = await productVariantControllerFindVariants(
@@ -134,19 +285,20 @@ async function sendVariantsCard(
     category ? { category } : undefined,
   );
 
-  const card = buildVariantsCard(
-    productId,
-    product.name,
-    categories,
-    category ?? "",
-    variants,
-    quantity,
-  ) as IAdaptiveCard;
+  return adaptiveCardResponse(
+    buildVariantsCard(productId, categories, variants),
+  );
+}
 
-  await send({
+async function makeVariantsCard(
+  productId: string,
+  category?: string,
+): Promise<ActivityLike> {
+  const response = await buildVariantsResponse(productId, category);
+  return {
     type: "message",
-    attachments: [cardAttachment("adaptive", card)],
-  });
+    attachments: [cardAttachment("adaptive", response.value)],
+  };
 }
 
 // helper: pulls the selected variant ids out of the submitted card data
@@ -179,173 +331,45 @@ function getSelectedVariantIds(data: CardActionData) {
   };
 }
 
-// function used for submitting the product selection and creating the order
-async function sendProductSelectionCard(
-  send: SendFunction,
+async function buildProductSelectionResponse(
   data: CardActionData,
+  userId: string,
 ) {
   if (!data.productId) {
-    await send(`productId fehlt.`);
-    return;
+    throw new Error("productId fehlt.");
   }
 
   const { selected, missing } = getSelectedVariantIds(data);
   if (missing.length > 0) {
-    await send(`Bitte auswählen: ${missing.join(", ")}.`);
-    return;
+    throw new Error(`Bitte auswählen: ${missing.join(", ")}.`);
   }
 
   const productVariantIds = selected.map((item) => item.productVariantId);
   if (productVariantIds.length === 0) {
-    await send(`Keine Varianten ausgewählt.`);
-    return;
+    throw new Error("Keine Varianten ausgewählt.");
   }
 
-  await orderControllerCreate({
-    userId: ORDER_USER_ID,
-    items: [
-      {
-        productId: data.productId,
-        productVariantId: productVariantIds,
-        quantity: 1,
-      },
-    ],
-  });
-}
-
-// --- Message verwaltung ---
-
-app.on("message", async ({ send, activity }) => {
-  const data = getCardAction(activity.value);
-  console.log(data);
-  if (data?.action) {
-    switch (data.action) {
-      case "changePage":
-        return sendProductsCard(send, data.page ?? 0);
-
-      case "selectProduct":
-        if (data.productId) {
-          return sendVariantsCard(send, data.productId);
-        }
-        break;
-
-      case "filterVariants":
-        if (data.productId) {
-          return sendVariantsCard(send, data.productId, data.category);
-        }
-        break;
-
-      case "submitProductSelection":
-        return sendProductSelectionCard(send, data);
-
-      case "backToProducts":
-        return sendProductsCard(send);
-    }
-  }
-
-  const text = activity.text?.trim().toLowerCase();
-  if (text === "/shop") {
-    return sendProductsCard(send);
-  }
-});
-
-// :snippet-start: message-ext-query-link
-app.on("message.ext.query-link", async ({ activity }) => {
-  const { url } = activity.value;
-
-  if (!url) {
-    return { status: 400 };
-  }
-
-  const { card, thumbnail } = createLinkUnfurlCard(url);
-  const attachment = {
-    ...cardAttachment("adaptive", card), // expanded card in the compose box...
-    preview: cardAttachment("thumbnail", thumbnail), //preview card in the compose box...
-  };
-
-  return {
-    composeExtension: {
-      type: "result",
-      attachmentLayout: "list",
-      attachments: [attachment],
-    },
-  };
-});
-// :snippet-end: message-ext-query-link
-// :snippet-start: message-ext-submit
-app.on("message.ext.submit", async ({ activity }) => {
-  const { commandId } = activity.value;
-  let card: IAdaptiveCard;
-
-  if (commandId === "createCard") {
-    // activity.value.commandContext == "compose"
-    card = createCard(activity.value.data);
-  } else if (
-    commandId === "getMessageDetails" &&
-    activity.value.messagePayload
-  ) {
-    // activity.value.commandContext == "message"
-    card = createMessageDetailsCard(activity.value.messagePayload);
-  } else {
-    throw new Error(`Unknown commandId: ${commandId}`);
-  }
-
-  return {
-    composeExtension: {
-      type: "result",
-      attachmentLayout: "list",
-      attachments: [cardAttachment("adaptive", card)],
-    },
-  };
-});
-// :snippet-end: message-ext-submit
-
-// :snippet-start: message-ext-open
-app.on("message.ext.open", async ({ activity, api }) => {
-  const conversationId = activity.conversation.id;
-  const members = await api.conversations.members(conversationId).get();
-  const card = createConversationMembersCard(members);
-
-  return {
-    task: {
-      type: "continue",
-      value: {
-        title: "Conversation members",
-        height: "small",
-        width: "small",
-        card: cardAttachment("adaptive", card),
-      },
-    },
-  };
-});
-// :snippet-end: message-ext-open
-
-// :snippet-start: message-ext-query
-app.on("message.ext.query", async ({ activity }) => {
-  const { commandId } = activity.value;
-  const searchQuery = activity.value.parameters![0].value;
-
-  if (commandId == "searchQuery") {
-    const cards = await createDummyCards(searchQuery);
-    const attachments = cards.map(({ card, thumbnail }) => {
-      return {
-        ...cardAttachment("adaptive", card), // expanded card in the compose box...
-        preview: cardAttachment("thumbnail", thumbnail), // preview card in the compose box...
-      };
+  try {
+    await orderControllerCreate({
+      userId,
+      items: [
+        {
+          productId: data.productId,
+          productVariantId: productVariantIds,
+          quantity: 1,
+        },
+      ],
     });
-
-    return {
-      composeExtension: {
-        type: "result",
-        attachmentLayout: "list",
-        attachments: attachments,
-      },
-    };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unbekannter Fehler bei der Bestellung.";
+    throw new Error(message);
   }
 
-  return { status: 400 };
-});
-// :snippet-end: message-ext-query
+  return orderResponseCard;
+}
 
 (async () => {
   await app.start();
