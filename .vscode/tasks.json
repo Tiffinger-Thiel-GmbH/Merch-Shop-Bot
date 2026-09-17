@@ -45,7 +45,11 @@
       "command": "npm run dev:teamsfx:playground",
       "isBackground": true,
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "shell": {
+      "executable": "/bin/bash",
+      "args": ["-c"]
+    },
       },
       "problemMatcher": {
         "pattern": [
@@ -71,7 +75,11 @@
       "options": {
         "env": {
           "PATH": "${workspaceFolder}/devTools/playground/node_modules/.bin:${env:PATH}"
-        }
+        },
+        "shell": {
+      "executable": "/bin/bash",
+      "args": ["-c"]
+    }
       },
       "windows": {
         "options": {
@@ -179,7 +187,11 @@
       "command": "npm run dev:teamsfx",
       "isBackground": true,
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "shell": {
+      "executable": "/bin/bash",
+      "args": ["-c"]
+    }
       },
       "problemMatcher": {
         "pattern": {

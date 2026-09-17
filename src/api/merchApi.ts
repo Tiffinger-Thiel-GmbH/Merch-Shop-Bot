@@ -90,7 +90,13 @@ export interface ProductVariantListDTO {
 export interface UpsertUserDto {
   userMail: string;
   userName: string;
-  userId?: string;
+}
+
+export interface UserDTO {
+  name: string;
+  id: string;
+  email: string;
+  createdAt: string;
 }
 
 export type ProductVariantControllerFindVariantsParams = {
@@ -172,9 +178,9 @@ export const productVariantControllerFindVariants = (
 
 export const userControllerPutUser = (
   upsertUserDto: BodyType<UpsertUserDto>,
-  options?: SecondParameter<typeof customInstance<void>>,
+  options?: SecondParameter<typeof customInstance<UserDTO>>,
 ) => {
-  return customInstance<void>(
+  return customInstance<UserDTO>(
     {
       url: `/user`,
       method: "PUT",
