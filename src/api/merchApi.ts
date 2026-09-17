@@ -12,7 +12,6 @@ export interface ProductDTO {
   /** @nullable */
   description: string | null;
   id: string;
-  imageUrl: string;
 }
 
 export interface ProductListDTO {

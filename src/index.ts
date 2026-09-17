@@ -5,9 +5,9 @@ import { ConsoleLogger } from "@microsoft/teams.common/logging";
 import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
 import {
   orderControllerCreate,
+  productsControllerFindAll,
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
-  productsControllerFindAll,
   userControllerPutUser,
 } from "./api/merchApi";
 import { App, IBaseActivityContext } from "@microsoft/teams.apps";
@@ -120,7 +120,7 @@ const options =
 
 const app = new App({
   ...options,
-  logger: new ConsoleLogger("Merch-Shop-Bot", { level: "debug" }),
+  logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
   skipAuth: !process.env.CLIENT_ID,
 });
 
@@ -209,13 +209,14 @@ app.on("message", async (context): Promise<void> => {
   }
 });
 
+// Defining Card Actions
 type CardActionData = {
   action?: string;
   page?: number;
   productId?: string;
   category?: string;
   variantInputIds?: VariantInputId[];
-  [key: string]: unknown;
+  [key: string]: unknown; // Inputs land here
 };
 
 type VariantInputId = {
@@ -300,6 +301,7 @@ async function makeVariantsCard(
   };
 }
 
+// helper: pulls the selected variant ids out of the submitted card data
 function getSelectedVariantIds(data: CardActionData) {
   const inputIds = data.variantInputIds ?? [];
   const selected = inputIds
