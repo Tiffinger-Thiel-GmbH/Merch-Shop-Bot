@@ -73,6 +73,18 @@ export interface UpdateOrderStatusDTO {
   status: UpdateOrderStatusDTOStatus;
 }
 
+export interface UpsertUserDto {
+  userMail: string;
+  userName: string;
+}
+
+export interface UserDTO {
+  name: string;
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
 export interface ProductVariantCategoriesDTO {
   categories: string[];
 }
@@ -85,18 +97,6 @@ export interface ProductVariantOutgoingDTO {
 
 export interface ProductVariantListDTO {
   items: ProductVariantOutgoingDTO[];
-}
-
-export interface UpsertUserDto {
-  userMail: string;
-  userName: string;
-}
-
-export interface UserDTO {
-  name: string;
-  id: string;
-  email: string;
-  createdAt: string;
 }
 
 export type ProductVariantControllerFindVariantsParams = {
@@ -155,6 +155,21 @@ export const orderControllerUpdateStatus = (
   );
 };
 
+export const userControllerPutUser = (
+  upsertUserDto: BodyType<UpsertUserDto>,
+  options?: SecondParameter<typeof customInstance<UserDTO>>,
+) => {
+  return customInstance<UserDTO>(
+    {
+      url: `/user`,
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      data: upsertUserDto,
+    },
+    options,
+  );
+};
+
 export const productVariantCategoryControllerFindCategories = (
   productId: string,
   options?: SecondParameter<typeof customInstance<ProductVariantCategoriesDTO>>,
@@ -172,21 +187,6 @@ export const productVariantControllerFindVariants = (
 ) => {
   return customInstance<ProductVariantListDTO>(
     { url: `/product/${productId}/variant`, method: "GET", params },
-    options,
-  );
-};
-
-export const userControllerPutUser = (
-  upsertUserDto: BodyType<UpsertUserDto>,
-  options?: SecondParameter<typeof customInstance<UserDTO>>,
-) => {
-  return customInstance<UserDTO>(
-    {
-      url: `/user`,
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      data: upsertUserDto,
-    },
     options,
   );
 };
@@ -213,14 +213,14 @@ export type OrderControllerCreateResult = NonNullable<
 export type OrderControllerUpdateStatusResult = NonNullable<
   Awaited<ReturnType<typeof orderControllerUpdateStatus>>
 >;
+export type UserControllerPutUserResult = NonNullable<
+  Awaited<ReturnType<typeof userControllerPutUser>>
+>;
 export type ProductVariantCategoryControllerFindCategoriesResult = NonNullable<
   Awaited<ReturnType<typeof productVariantCategoryControllerFindCategories>>
 >;
 export type ProductVariantControllerFindVariantsResult = NonNullable<
   Awaited<ReturnType<typeof productVariantControllerFindVariants>>
->;
-export type UserControllerPutUserResult = NonNullable<
-  Awaited<ReturnType<typeof userControllerPutUser>>
 >;
 export type AssetsControllerFindOneResult = NonNullable<
   Awaited<ReturnType<typeof assetsControllerFindOne>>
