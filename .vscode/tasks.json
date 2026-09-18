@@ -47,9 +47,9 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "shell": {
-      "executable": "/bin/bash",
-      "args": ["-c"]
-    },
+          "executable": "powershell",
+          "args": ["-Command"]
+        }
       },
       "problemMatcher": {
         "pattern": [
@@ -77,9 +77,9 @@
           "PATH": "${workspaceFolder}/devTools/playground/node_modules/.bin:${env:PATH}"
         },
         "shell": {
-      "executable": "/bin/bash",
-      "args": ["-c"]
-    }
+          "executable": "powershell",
+          "args": ["-Command"]
+        }
       },
       "windows": {
         "options": {
@@ -189,9 +189,9 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "shell": {
-      "executable": "/bin/bash",
-      "args": ["-c"]
-    }
+          "executable": "/bin/bash",
+          "args": ["-c"]
+        }
       },
       "problemMatcher": {
         "pattern": {

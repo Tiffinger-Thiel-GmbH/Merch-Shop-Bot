@@ -215,7 +215,7 @@ type CardActionData = {
   page?: number;
   productId?: string;
   category?: string;
-  quantity?: number | string;
+  quantity?: string; // teams inputs liefern nur strings
   variantInputIds?: VariantInputId[];
   [key: string]: unknown; // Inputs land here
 };
@@ -332,10 +332,6 @@ function getSelectedVariantIds(data: CardActionData) {
   };
 }
 
-function getOrderQuantity(data: CardActionData): number {
-  return Number(data.quantity);
-}
-
 async function buildProductSelectionResponse(
   data: CardActionData,
   userId: string,
@@ -354,8 +350,6 @@ async function buildProductSelectionResponse(
     throw new Error("Keine Varianten ausgewählt.");
   }
 
-  const quantity = getOrderQuantity(data);
-
   try {
     await orderControllerCreate({
       userId,
@@ -363,7 +357,7 @@ async function buildProductSelectionResponse(
         {
           productId: data.productId,
           productVariantId: productVariantIds,
-          quantity,
+          quantity: Number(data.quantity) || 1,
         },
       ],
     });
