@@ -215,6 +215,7 @@ type CardActionData = {
   page?: number;
   productId?: string;
   category?: string;
+  quantity?: string; // teams inputs liefern nur strings
   variantInputIds?: VariantInputId[];
   [key: string]: unknown; // Inputs land here
 };
@@ -356,7 +357,7 @@ async function buildProductSelectionResponse(
         {
           productId: data.productId,
           productVariantId: productVariantIds,
-          quantity: 1,
+          quantity: Number(data.quantity) || 1,
         },
       ],
     });
