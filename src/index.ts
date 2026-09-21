@@ -287,7 +287,7 @@ async function buildVariantsResponse(productId: string, category?: string) {
   );
 
   return adaptiveCardResponse(
-    buildVariantsCard(productId, categories, variants),
+    buildVariantsCard(productId, categories, variants, 1),
   );
 }
 
