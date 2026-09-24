@@ -163,12 +163,6 @@ export function buildVariantsCard(
         })),
       });
     }
-    body.push({
-      type: "Input.Number",
-      id: "quantity",
-      label: "Menge",
-      value: 1,
-    });
   }
 
   return {
