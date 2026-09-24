@@ -359,7 +359,7 @@ async function buildProductSelectionResponse(
         {
           productId: data.productId,
           productVariantId: productVariantIds,
-          quantity: Number(data.quantity) || 1,
+          quantity: 1,
         },
       ],
     });

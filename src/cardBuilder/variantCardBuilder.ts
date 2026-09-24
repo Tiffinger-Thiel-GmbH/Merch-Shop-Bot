@@ -11,7 +11,6 @@ export function buildVariantsCard(
   categoriesData: ProductVariantCategoriesDTO,
   _selectedCategory: string,
   variantsData: ProductVariantListDTO,
-  quantity: number,
 ): object {
   const { categories } = categoriesData;
   const { items } = variantsData;
@@ -68,9 +67,7 @@ export function buildVariantsCard(
       type: "Input.Number",
       id: "quantity",
       label: "Menge",
-      min: 1,
-      max: 10,
-      value: quantity,
+      value: 1,
     });
   }
 

@@ -19,7 +19,6 @@ async function sendProductsCard(context: TurnContext, page = 0) {
 async function sendVariantsCard(
   context: TurnContext,
   productId: string,
-  quantity: number,
   category?: string,
 ) {
   const product = await productsControllerFindOneById(productId);
@@ -38,7 +37,6 @@ async function sendVariantsCard(
     categoriesData,
     selectedCategory,
     variantsData,
-    quantity,
   );
   await context.sendActivity(
     MessageFactory.attachment(CardFactory.adaptiveCard(card)),
@@ -53,7 +51,6 @@ export async function onMessage(context: TurnContext) {
         productId?: string;
         category?: string; // kommt aus dem Input.ChoiceSet "category"
         productVariantId?: string;
-        quantity?: number; // kommt aus dem Input.Number "quantity"
       }
     | undefined;
 
@@ -62,17 +59,12 @@ export async function onMessage(context: TurnContext) {
       return sendProductsCard(context, value.page ?? 0);
 
     case "selectProduct":
-      if (value.productId) return sendVariantsCard(context, value.productId, 1);
+      if (value.productId) return sendVariantsCard(context, value.productId);
       break;
 
     case "filterVariants":
       if (value.productId)
-        return sendVariantsCard(
-          context,
-          value.productId,
-          value.quantity ?? 1,
-          value.category,
-        );
+        return sendVariantsCard(context, value.productId, value.category);
       break;
 
     case "backToProducts":
@@ -80,12 +72,9 @@ export async function onMessage(context: TurnContext) {
 
     case "selectVariant":
       if (value.productVariantId) {
-        const quantity = value.quantity ?? 1;
         // z.B. in den Warenkorb / Order-Flow übergeben
-        // await addToCart(context, value.productVariantId, quantity);
-        await context.sendActivity(
-          `Variante ${value.productVariantId} (Menge: ${quantity}) ausgewählt.`,
-        );
+        // await addToCart(context, value.productVariantId);
+        await context.sendActivity(`Variante ${value.productVariantId}.`);
       }
       break;
   }
