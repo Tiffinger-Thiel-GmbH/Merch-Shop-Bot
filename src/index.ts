@@ -148,7 +148,7 @@ app.on("message", async (context): Promise<void> => {
 
   if (data?.action) {
     switch (data.action) {
-      case "nextPage":
+      case "changePage":
         return sendOrReplace(await makeProductsCard(data.page ?? 0), context);
 
       case "selectProduct":

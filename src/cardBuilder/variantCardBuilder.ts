@@ -1,4 +1,3 @@
-import { BackgroundImage } from "@microsoft/teams.cards";
 import {
   ProductVariantCategoriesDTO,
   ProductVariantListDTO,
