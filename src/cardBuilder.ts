@@ -103,7 +103,7 @@ export function buildVariantsCard(
   productId: string,
   categoriesData: ProductVariantCategoriesDTO,
   variantsData: ProductVariantListDTO,
-  quantity: 1,
+  quantity = 1,
 ): object {
   const { categories } = categoriesData;
   const { items } = variantsData;
@@ -156,6 +156,14 @@ export function buildVariantsCard(
         })),
       });
     }
+    body.push({
+      type: "Input.Number",
+      id: "quantity",
+      label: "Menge",
+      min: 1,
+      max: 10,
+      value: quantity,
+    });
   }
 
   return {
