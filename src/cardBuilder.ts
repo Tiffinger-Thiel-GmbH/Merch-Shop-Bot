@@ -108,13 +108,12 @@ function buildProductColumn(p: ProductDTO): AdaptiveCardElement {
 
 export function buildVariantsCard(
   productId: string,
+  productName: string,
   categoriesData: ProductVariantCategoriesDTO,
   variantsData: ProductVariantListDTO,
-  p: ProductDTO,
 ): object {
   const { categories } = categoriesData;
   const { items } = variantsData;
-  const productName = p.name;
   const categoryInputIds = categories.map((category, index) => ({
     category,
     inputId: `variant_${index}`,
@@ -164,14 +163,6 @@ export function buildVariantsCard(
         })),
       });
     }
-    body.push({
-      type: "Input.Number",
-      id: "quantity",
-      label: "Menge",
-      min: 1,
-      max: 10,
-      value: "1",
-    });
   }
 
   return {
