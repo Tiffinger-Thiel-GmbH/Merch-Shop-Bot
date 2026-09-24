@@ -36,11 +36,18 @@ export function buildProductsCard(data: ProductListDTO, page = 0): object {
   ];
 
   const actions: AdaptiveCardElement[] = [];
+  if (page > 0) {
+    actions.push({
+      type: "Action.Submit",
+      title: "Vorherige Seite",
+      data: { action: "changePage", page: page - 1 },
+    });
+  }
   if (hasMore) {
     actions.push({
       type: "Action.Submit",
       title: "Weitere anzeigen",
-      data: { action: "nextPage", page: page + 1 },
+      data: { action: "changePage", page: page + 1 },
     });
   }
 
@@ -104,9 +111,11 @@ export function buildVariantsCard(
   categoriesData: ProductVariantCategoriesDTO,
   variantsData: ProductVariantListDTO,
   quantity = 1,
+  p: ProductDTO,
 ): object {
   const { categories } = categoriesData;
   const { items } = variantsData;
+  const productName = p.name;
   const categoryInputIds = categories.map((category, index) => ({
     category,
     inputId: `variant_${index}`,
@@ -115,7 +124,7 @@ export function buildVariantsCard(
   const body: AdaptiveCardElement[] = [
     {
       type: "TextBlock",
-      text: "Varianten wählen",
+      text: `${productName}`,
       weight: "Bolder",
       size: "Medium",
       wrap: true,
@@ -174,18 +183,20 @@ export function buildVariantsCard(
     actions: [
       {
         type: "Action.Submit",
+        title: "Zurück zu Produkten",
+        style: "destructive",
+        data: { action: "backToProducts" },
+      },
+      {
+        type: "Action.Submit",
         title: "Auswahl senden",
+        style: "positive",
         data: {
           action: "submitProductSelection",
           productId,
           variantInputIds: categoryInputIds,
           quantity,
         },
-      },
-      {
-        type: "Action.Submit",
-        title: "Zurück zu Produkten",
-        data: { action: "backToProducts" },
       },
     ],
   };
