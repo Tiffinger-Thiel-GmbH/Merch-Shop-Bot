@@ -161,11 +161,7 @@ app.on("message", async (context): Promise<void> => {
       case "filterVariants":
         if (data.productId) {
           return sendOrReplace(
-            await makeVariantsCard(
-              data.productId,
-              data.category,
-              Number(data.quantity) || 1,
-            ),
+            await makeVariantsCard(data.productId, data.category),
             context,
           );
         }
@@ -283,11 +279,7 @@ async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
   };
 }
 
-async function buildVariantsResponse(
-  productId: string,
-  category?: string,
-  quantity = 1,
-) {
+async function buildVariantsResponse(productId: string, category?: string) {
   const product = await productsControllerFindOneById(productId);
   const categories =
     await productVariantCategoryControllerFindCategories(productId);
@@ -297,16 +289,15 @@ async function buildVariantsResponse(
   );
 
   return adaptiveCardResponse(
-    buildVariantsCard(productId, product.name, categories, variants, quantity),
+    buildVariantsCard(productId, product.name, categories, variants),
   );
 }
 
 async function makeVariantsCard(
   productId: string,
   category?: string,
-  quantity = 1,
 ): Promise<ActivityLike> {
-  const response = await buildVariantsResponse(productId, category, quantity);
+  const response = await buildVariantsResponse(productId, category);
   return {
     type: "message",
     attachments: [cardAttachment("adaptive", response.value)],
