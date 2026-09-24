@@ -1,6 +1,7 @@
 import { TurnContext, CardFactory, MessageFactory } from "botbuilder";
 import {
   productsControllerFindAll,
+  productsControllerFindOneById,
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
 } from "./api/merchApi";
@@ -21,6 +22,7 @@ async function sendVariantsCard(
   quantity: number,
   category?: string,
 ) {
+  const product = await productsControllerFindOneById(productId);
   const categoriesData =
     await productVariantCategoryControllerFindCategories(productId);
   const selectedCategory = category ?? categoriesData.categories[0] ?? "";
@@ -32,6 +34,7 @@ async function sendVariantsCard(
 
   const card = buildVariantsCard(
     productId,
+    product.name,
     categoriesData,
     selectedCategory,
     variantsData,

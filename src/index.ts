@@ -6,6 +6,7 @@ import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
 import {
   orderControllerCreate,
   productsControllerFindAll,
+  productsControllerFindOneById,
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
   userControllerPutUser,
@@ -287,6 +288,7 @@ async function buildVariantsResponse(
   category?: string,
   quantity = 1,
 ) {
+  const product = await productsControllerFindOneById(productId);
   const categories =
     await productVariantCategoryControllerFindCategories(productId);
   const variants = await productVariantControllerFindVariants(
@@ -295,7 +297,7 @@ async function buildVariantsResponse(
   );
 
   return adaptiveCardResponse(
-    buildVariantsCard(productId, categories, variants, quantity),
+    buildVariantsCard(productId, product.name, categories, variants, quantity),
   );
 }
 
