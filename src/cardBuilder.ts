@@ -161,6 +161,7 @@ export function buildVariantsCard(
           title: variant.name,
           value: variant.productVariantId,
         })),
+        value: categoryVariants.find(() => true)?.productVariantId,
       });
     }
   }
