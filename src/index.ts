@@ -289,7 +289,13 @@ async function buildVariantsResponse(productId: string, category?: string) {
   );
 
   return adaptiveCardResponse(
-    buildVariantsCard(productId, product.name, categories, variants),
+    buildVariantsCard(
+      productId,
+      product.name,
+      product.imageUrl,
+      categories,
+      variants,
+    ),
   );
 }
 
