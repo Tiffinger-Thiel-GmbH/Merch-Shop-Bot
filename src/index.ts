@@ -6,6 +6,7 @@ import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
 import {
   orderControllerCreate,
   productsControllerFindAll,
+  productsControllerFindOneById,
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
   userControllerPutUser,
@@ -279,6 +280,7 @@ async function makeProductsCard(page: number = 0): Promise<ActivityLike> {
 }
 
 async function buildVariantsResponse(productId: string, category?: string) {
+  const product = await productsControllerFindOneById(productId);
   const categories =
     await productVariantCategoryControllerFindCategories(productId);
   const variants = await productVariantControllerFindVariants(
@@ -287,7 +289,7 @@ async function buildVariantsResponse(productId: string, category?: string) {
   );
 
   return adaptiveCardResponse(
-    buildVariantsCard(productId, categories, variants),
+    buildVariantsCard(productId, product.name, categories, variants),
   );
 }
 
@@ -357,7 +359,7 @@ async function buildProductSelectionResponse(
         {
           productId: data.productId,
           productVariantId: productVariantIds,
-          quantity: Number(data.quantity) || 1,
+          quantity: 1,
         },
       ],
     });
