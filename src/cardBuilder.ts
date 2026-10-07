@@ -1,4 +1,3 @@
-// cardBuilder.ts
 import type {
   ProductDTO,
   ProductListDTO,
@@ -109,6 +108,7 @@ function buildProductColumn(p: ProductDTO): AdaptiveCardElement {
 export function buildVariantsCard(
   productId: string,
   productName: string,
+  productImage: string,
   categoriesData: ProductVariantCategoriesDTO,
   variantsData: ProductVariantListDTO,
 ): object {
@@ -126,6 +126,14 @@ export function buildVariantsCard(
       weight: "Bolder",
       size: "Medium",
       wrap: true,
+    },
+    {
+      type: "Image",
+      size: "Large",
+      style: "default",
+      height: "stretch",
+      horizontalAlignment: "Center",
+      url: productImage,
     },
   ];
 

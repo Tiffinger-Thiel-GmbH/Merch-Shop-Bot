@@ -5,8 +5,7 @@ import {
   productVariantCategoryControllerFindCategories,
   productVariantControllerFindVariants,
 } from "./api/merchApi";
-import { buildProductsCard } from "./cardBuilder/shopCardBuilder";
-import { buildVariantsCard } from "./cardBuilder/variantCardBuilder";
+import { buildProductsCard, buildVariantsCard } from "./cardBuilder";
 
 async function sendProductsCard(context: TurnContext, page = 0) {
   const data = await productsControllerFindAll();
@@ -34,8 +33,8 @@ async function sendVariantsCard(
   const card = buildVariantsCard(
     productId,
     product.name,
+    product.imageUrl,
     categoriesData,
-    selectedCategory,
     variantsData,
   );
   await context.sendActivity(
