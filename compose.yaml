@@ -1,0 +1,13 @@
+services:
+  merch-shop-bot:
+    build: .
+    restart: on-failure
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: development
+      PORT: 3978
+    ports:
+      - "3978:3978"
+      - "56150:56150"

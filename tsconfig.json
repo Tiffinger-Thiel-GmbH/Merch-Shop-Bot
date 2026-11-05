@@ -10,6 +10,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "rewriteRelativeImportExtensions": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
@@ -21,7 +22,8 @@
     "types": ["node"]
   },
   "ts-node": {
-    "transpileOnly": true
+    "transpileOnly": true,
+    "experimentalResolver": true
   },
   "include": ["src/**/*.ts"]
 }
