@@ -148,7 +148,7 @@ const app = new App({
   ...options,
   dangerouslyAllowUnauthenticatedRequests: allowUnauthenticatedRequests,
   logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
-  skipAuth: !process.env.CLIENT_ID,
+  skipAuth: allowUnauthenticatedRequests,
 });
 
 app.on("install.add", async ({ send }) => {
