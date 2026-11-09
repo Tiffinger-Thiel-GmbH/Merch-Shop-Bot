@@ -23,7 +23,7 @@ provision:
       name: Merch-Shop-Bot${{APP_NAME_SUFFIX}}
       generateClientSecret: true
       generateServicePrincipal: true
-      signInAudience: AzureADMultipleOrgs
+      signInAudience: AzureADMyOrg
     writeToEnvironmentFile:
       # The Microsoft Entra application's client id created for bot.
       clientId: BOT_ID
