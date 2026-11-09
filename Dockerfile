@@ -19,4 +19,5 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
 
 EXPOSE 3978
+USER node
 CMD ["node", "."]

@@ -3,11 +3,10 @@ services:
     build: .
     restart: on-failure
     env_file:
-      - path: .env
-        required: false
+      - path: .env.prod
+        required: true
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3978
     ports:
       - "3978:3978"
-      - "56150:56150"
