@@ -110,17 +110,43 @@ const microsoftLoginTokenFactory = () => {
 // Configure authentication using TokenCredentials
 const tokenCredentials: TokenCredentials = {
   clientId: process.env.CLIENT_ID || "",
+  tenantId: process.env.TENANT_ID,
   token: microsoftLoginTokenFactory(),
 };
 
-// Use managed identity in cloud environment, otherwise use devtools plugin for local development
-const options =
-  process.env.BOT_TYPE === "UserAssignedMsi"
-    ? { ...tokenCredentials }
-    : { plugins: [] };
+const required = ["CLIENT_ID", "TENANT_ID", "CLIENT_SECRET"] as const;
+const missing = required.filter((key) => !process.env[key]);
+const hasAnyClientCredentials = required.some((key) => !!process.env[key]);
+const allowUnauthenticatedRequests =
+  process.env.DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS === "true";
+
+if (hasAnyClientCredentials && missing.length > 0) {
+  throw new Error(`Missing required env vars: ${missing.join(", ")}`);
+}
+
+const hasClientCredentials = missing.length === 0;
+if (
+  allowUnauthenticatedRequests &&
+  (process.env.NODE_ENV !== "development" || hasClientCredentials)
+) {
+  throw new Error(
+    "Unauthenticated requests are only allowed for local development without bot credentials.",
+  );
+}
+
+if (missing.length > 0 && !allowUnauthenticatedRequests) {
+  throw new Error(
+    `Missing required env vars: ${missing.join(", ")}. Set DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS=true only for local Agents Playground development.`,
+  );
+}
+
+const options = hasClientCredentials
+  ? { ...tokenCredentials }
+  : { plugins: [] };
 
 const app = new App({
   ...options,
+  dangerouslyAllowUnauthenticatedRequests: allowUnauthenticatedRequests,
   logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
   skipAuth: !process.env.CLIENT_ID,
 });

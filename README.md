@@ -1,5 +1,29 @@
 # Overview of Message Extensions template
 
+## Single-tenant bot credentials
+
+The bot authenticates with an app registration and client secret. Configure these
+environment variables on the server (or in `.localConfigs` for local development):
+
+- `CLIENT_ID`: the app registration's Application (client) ID; this is also `BOT_ID`
+  in the Teams app manifest.
+- `TENANT_ID`: the Microsoft Entra tenant ID that owns the app registration.
+- `CLIENT_SECRET`: a client secret for that app registration.
+
+Create the app registration as single tenant and set its client secret in your
+hosting provider's secret store. Do not commit the secret. For local Teams Toolkit
+development, `m365agents.local.yml` creates a single-tenant registration and writes
+the credential variables to the ignored `.localConfigs` file.
+
+The bot requires all three credentials unless
+`DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS=true` is explicitly set for local
+Agents Playground development with `NODE_ENV=development`. That setting is
+rejected outside development or when bot credentials are configured. A
+deployed bot must provide all three.
+
+For production Entra registration and internal-only Teams publishing, see
+[the internal deployment guide](docs/single-tenant-entra-registration.md).
+
 A Teams app that show cases three message extensions features:
 
 - action commands: allows users to interact with your app through buttons and forms in the compose message area in Microsoft Teams.
