@@ -121,7 +121,7 @@ const microsoftLoginTokenFactory = () => {
 
 // Configure authentication using TokenCredentials
 const tokenCredentials: TokenCredentials = {
-  clientId: process.env.CLIENT_ID || "",
+  clientId: process.env.CLIENT_ID as string,
   token: microsoftLoginTokenFactory(),
 };
 
@@ -133,14 +133,7 @@ if (missing.length > 0 && process.env.NODE_ENV === "production") {
   throw new Error(`Missing required env vars: ${missing.join(", ")}`);
 }
 
-const hasClientCredentials = missing.length === 0;
-const options = hasClientCredentials
-  ? { ...tokenCredentials }
-  : { plugins: [] };
-
 const app = new App({
-  ...options,
-  dangerouslyAllowUnauthenticatedRequests: !hasClientCredentials,
   logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
 });
 
