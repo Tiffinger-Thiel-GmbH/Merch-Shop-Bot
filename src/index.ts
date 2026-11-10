@@ -93,10 +93,7 @@ async function sendWithRef(
 const microsoftLoginTokenFactory = () => {
   let credential: ClientSecretCredential;
 
-  return async (
-    scope: string | string[],
-    _tenantId?: string,
-  ): Promise<string> => {
+  return async (scope: string | string[]): Promise<string> => {
     if (!credential) {
       const {
         TENANT_ID: tenantId,
