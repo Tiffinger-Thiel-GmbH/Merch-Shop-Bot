@@ -42,6 +42,8 @@ docker compose up --build -d
 The bot listens on port `3978`. To view logs or stop it, run
 `docker compose logs -f` or `docker compose down`.
 
+## Microsoft Prerequisites
+
 > **Prerequisites**
 >
 > - [Node.js](https://nodejs.org/), supported versions: 20, 22
