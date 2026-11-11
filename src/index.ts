@@ -126,14 +126,20 @@ const tokenCredentials: TokenCredentials = {
 };
 
 // Use the configured single-tenant app registration when credentials are present.
-const required = ["CLIENT_ID", "TENANT_ID", "CLIENT_SECRET"] as const;
+const required = ["CLIENT_ID", "TENANT_ID", "CLIENT_SECRET"];
 const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length > 0 && process.env.NODE_ENV === "production") {
   throw new Error(`Missing required env vars: ${missing.join(", ")}`);
 }
 
+const hasClientCredentials = missing.length === 0;
+const options = hasClientCredentials
+  ? { ...tokenCredentials }
+  : { plugins: [] };
+
 const app = new App({
+  ...options,
   logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
 });
 

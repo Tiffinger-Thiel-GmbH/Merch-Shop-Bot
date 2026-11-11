@@ -7,8 +7,8 @@ environment variables on the server (or in `.localConfigs` for local development
 
 - `CLIENT_ID`: the app registration's Application (client) ID; this is also `BOT_ID`
   in the Teams app manifest.
-- `TENANT_ID`: the Microsoft Entra tenant ID that owns the app registration.
-- `CLIENT_SECRET`: a client secret for that app registration.
+- `TENANT_ID`: the Microsoft Entra tenant ID.
+- `CLIENT_SECRET`: generated in Microsoft Entra. If you dont have the `CLIENT_SECRET` then generate a new one in [Microsoft Entra under Certificates & Secrets](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/4dc773bf-b795-4c3e-b2c3-272b317c667f/isMSAApp~/false).
 
 Create the app registration as single tenant and set its client secret in your
 hosting provider's secret store. Do not commit the secret. For local Teams Toolkit
@@ -28,8 +28,8 @@ A Teams app that show cases three message extensions features:
 
 ## Run with Docker Compose
 
-Copy `.env.example` to `.env` and set `CLIENT_ID`, `TENANT_ID`, and
-`CLIENT_SECRET` for a deployed Teams bot. Set `API_BASE_URL` to the address
+Set `CLIENT_ID`, `TENANT_ID`, and
+`CLIENT_SECRET` in `env` for a deployed Teams bot. Set `API_BASE_URL` to the address
 of your Merch Shop API as reachable from the container. On Docker Desktop,
 `host.docker.internal` can be used to reach a service running on the host.
 
