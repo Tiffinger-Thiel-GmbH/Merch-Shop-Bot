@@ -8,7 +8,7 @@ environment variables on the server (or in `.localConfigs` for local development
 - `CLIENT_ID`: the app registration's Application (client) ID; this is also `BOT_ID`
   in the Teams app manifest.
 - `TENANT_ID`: the Microsoft Entra tenant ID.
-- `CLIENT_SECRET`: generated in Microsoft Entra. If you dont have the `CLIENT_SECRET` then generate a new one in [Microsoft Entra under Certificates & Secrets](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/4dc773bf-b795-4c3e-b2c3-272b317c667f/isMSAApp~/false).
+- `CLIENT_SECRET`: generated in Microsoft Entra. If you dont have the `CLIENT_SECRET` then generate a new one in [Microsoft Entra under Certificates & Secrets](https://entra.microsoft.com/).
 
 Create the app registration as single tenant and set its client secret in your
 hosting provider's secret store. Do not commit the secret. For local Teams Toolkit
