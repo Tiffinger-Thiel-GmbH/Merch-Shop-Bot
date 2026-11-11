@@ -1,5 +1,6 @@
 # TeamsFx files
 .env.prod
+.env.dev
 .localConfigs
 .localConfigs.playground
 .notification.localstore.json
