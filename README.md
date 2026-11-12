@@ -27,8 +27,8 @@ A Teams app that show cases three message extensions features:
 
 ## Run with Docker Compose
 
-Set `CLIENT_ID`, `TENANT_ID`, and
-`CLIENT_SECRET` in the `env.prod` file for a deployed Teams bot. Set `API_BASE_URL` to the address
+Copy the Production Part of the `.env.example` into the `env.prod` and then
+set `CLIENT_ID`, `TENANT_ID`, and `CLIENT_SECRET` in the `env.prod` file for a deployed Teams bot. Set `API_BASE_URL` to the address
 of your Merch Shop API as reachable from the container. On Docker Desktop,
 `host.docker.internal` can be used to reach a service running on the host.
 
