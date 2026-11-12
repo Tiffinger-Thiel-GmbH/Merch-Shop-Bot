@@ -1,0 +1,14 @@
+.git
+.github
+.vscode
+node_modules
+dist
+env
+appPackage
+infra
+devTools
+.env
+.env.*
+.localConfigs
+.localConfigs.*
+npm-debug.log*

@@ -1,5 +1,22 @@
 # Overview of Message Extensions template
 
+## Single-tenant bot credentials
+
+The bot authenticates with an app registration and client secret. Configure these
+environment variables on the server (or in `.localConfigs` for local development):
+
+- `CLIENT_ID`: the app registration's Application (client) ID; this is also `BOT_ID`
+  in the Teams app manifest.
+- `TENANT_ID`: the Microsoft Entra tenant ID.
+- `CLIENT_SECRET`: generated in Microsoft Entra. If you dont have the `CLIENT_SECRET` then generate a new one in [Microsoft Entra under Certificates & Secrets](https://entra.microsoft.com/).
+
+Create a single-tenant app registration and store its client secret in your hosting
+provider's secret store; never commit it. For local development, `m365agents.local.yml` creates the registration and writes credentials to `.localConfigs`, which
+`npm run dev:teamsfx` loads. Git ignores the file because it contains the secret.
+
+When these three variables are absent, authentication is skipped for local
+Agents Playground development. A deployed bot must provide all three.
+
 A Teams app that show cases three message extensions features:
 
 - action commands: allows users to interact with your app through buttons and forms in the compose message area in Microsoft Teams.
@@ -7,6 +24,26 @@ A Teams app that show cases three message extensions features:
 - link unfurling: unfurls a link into an adaptive card when URLs with a particular domain are pasted into the compose message area in Microsoft Teams.
 
 ## Get Started
+
+## Run with Docker Compose
+
+Copy the Production Part of the `.env.example` into the `env.prod` and then
+set `CLIENT_ID`, `TENANT_ID`, and `CLIENT_SECRET` in the `env.prod` file for a deployed Teams bot. Set `API_BASE_URL` to the address
+of your Merch Shop API as reachable from the container. On Docker Desktop,
+`host.docker.internal` can be used to reach a service running on the host.
+
+Build and start the bot with:
+
+```sh
+docker compose up --build -d
+```
+
+## Read Docker logs
+
+The bot listens on port `3978`. To view logs or stop it, run
+`docker compose logs -f` or `docker compose down`.
+
+## Microsoft Prerequisites
 
 > **Prerequisites**
 >
