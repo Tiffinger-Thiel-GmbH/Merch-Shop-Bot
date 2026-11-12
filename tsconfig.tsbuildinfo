@@ -1,1 +1,1 @@
-{"root":["./src/card.ts","./src/clickFlow.ts","./src/index.ts","./src/shop-api.ts","./src/api/axiosInstance.ts","./src/api/merchApi.ts","./src/cardBuilder/cardBuilder.ts","./src/cardBuilder/shopCardBuilder.ts","./src/cardBuilder/variantCardBuilder.ts"],"errors":true,"version":"5.9.3"}
+{"root":["./src/card.ts","./src/cardbuilder.ts","./src/clickflow.ts","./src/index.ts","./src/shop-api.ts","./src/api/axiosinstance.ts","./src/api/merchapi.ts"],"version":"5.9.3"}

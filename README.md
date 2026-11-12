@@ -7,22 +7,15 @@ environment variables on the server (or in `.localConfigs` for local development
 
 - `CLIENT_ID`: the app registration's Application (client) ID; this is also `BOT_ID`
   in the Teams app manifest.
-- `TENANT_ID`: the Microsoft Entra tenant ID that owns the app registration.
-- `CLIENT_SECRET`: a client secret for that app registration.
+- `TENANT_ID`: the Microsoft Entra tenant ID.
+- `CLIENT_SECRET`: generated in Microsoft Entra. If you dont have the `CLIENT_SECRET` then generate a new one in [Microsoft Entra under Certificates & Secrets](https://entra.microsoft.com/).
 
-Create the app registration as single tenant and set its client secret in your
-hosting provider's secret store. Do not commit the secret. For local Teams Toolkit
-development, `m365agents.local.yml` creates a single-tenant registration and writes
-the credential variables to the ignored `.localConfigs` file.
+Create a single-tenant app registration and store its client secret in your hosting
+provider's secret store; never commit it. For local development, `m365agents.local.yml` creates the registration and writes credentials to `.localConfigs`, which
+`npm run dev:teamsfx` loads. Git ignores the file because it contains the secret.
 
-The bot requires all three credentials unless
-`DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS=true` is explicitly set for local
-Agents Playground development with `NODE_ENV=development`. That setting is
-rejected outside development or when bot credentials are configured. A
-deployed bot must provide all three.
-
-For production Entra registration and internal-only Teams publishing, see
-[the internal deployment guide](docs/single-tenant-entra-registration.md).
+When these three variables are absent, authentication is skipped for local
+Agents Playground development. A deployed bot must provide all three.
 
 A Teams app that show cases three message extensions features:
 
@@ -31,6 +24,26 @@ A Teams app that show cases three message extensions features:
 - link unfurling: unfurls a link into an adaptive card when URLs with a particular domain are pasted into the compose message area in Microsoft Teams.
 
 ## Get Started
+
+## Run with Docker Compose
+
+Copy the Production Part of the `.env.example` into the `env.prod` and then
+set `CLIENT_ID`, `TENANT_ID`, and `CLIENT_SECRET` in the `env.prod` file for a deployed Teams bot. Set `API_BASE_URL` to the address
+of your Merch Shop API as reachable from the container. On Docker Desktop,
+`host.docker.internal` can be used to reach a service running on the host.
+
+Build and start the bot with:
+
+```sh
+docker compose up --build -d
+```
+
+## Read Docker logs
+
+The bot listens on port `3978`. To view logs or stop it, run
+`docker compose logs -f` or `docker compose down`.
+
+## Microsoft Prerequisites
 
 > **Prerequisites**
 >

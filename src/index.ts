@@ -1,4 +1,4 @@
-import { ManagedIdentityCredential } from "@azure/identity";
+import { ClientSecretCredential } from "@azure/identity";
 import orderResponseCardJson from "./cards/orderResponse.json";
 import { IAdaptiveCard } from "@microsoft/teams.cards";
 import { ConsoleLogger } from "@microsoft/teams.common/logging";
@@ -91,17 +91,29 @@ async function sendWithRef(
 }
 
 const microsoftLoginTokenFactory = () => {
-  return async (
-    scope: string | string[],
-    tenantId?: string,
-  ): Promise<string> => {
-    const managedIdentityCredential = new ManagedIdentityCredential({
-      clientId: process.env.CLIENT_ID,
-    });
+  let credential: ClientSecretCredential;
+
+  return async (scope: string | string[]): Promise<string> => {
+    if (!credential) {
+      const {
+        TENANT_ID: tenantId,
+        CLIENT_ID: clientId,
+        CLIENT_SECRET: clientSecret,
+      } = process.env;
+      if (!tenantId || !clientId || !clientSecret) {
+        throw new Error(
+          "TENANT_ID, CLIENT_ID, and CLIENT_SECRET are required for bot authentication.",
+        );
+      }
+      credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+    }
+
     const scopes = Array.isArray(scope) ? scope : [scope];
-    const tokenResponse = await managedIdentityCredential.getToken(scopes, {
-      tenantId: tenantId,
-    });
+    const tokenResponse = await credential.getToken(scopes);
+
+    if (!tokenResponse) {
+      throw new Error("Failed to acquire a Microsoft identity access token.");
+    }
 
     return tokenResponse.token;
   };
@@ -109,37 +121,19 @@ const microsoftLoginTokenFactory = () => {
 
 // Configure authentication using TokenCredentials
 const tokenCredentials: TokenCredentials = {
-  clientId: process.env.CLIENT_ID || "",
-  tenantId: process.env.TENANT_ID,
+  clientId: process.env.CLIENT_ID as string,
   token: microsoftLoginTokenFactory(),
 };
 
-const required = ["CLIENT_ID", "TENANT_ID", "CLIENT_SECRET"] as const;
+// Use the configured single-tenant app registration when credentials are present.
+const required = ["CLIENT_ID", "TENANT_ID", "CLIENT_SECRET"];
 const missing = required.filter((key) => !process.env[key]);
-const hasAnyClientCredentials = required.some((key) => !!process.env[key]);
-const allowUnauthenticatedRequests =
-  process.env.DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS === "true";
 
-if (hasAnyClientCredentials && missing.length > 0) {
+if (missing.length > 0 && process.env.NODE_ENV === "production") {
   throw new Error(`Missing required env vars: ${missing.join(", ")}`);
 }
 
 const hasClientCredentials = missing.length === 0;
-if (
-  allowUnauthenticatedRequests &&
-  (process.env.NODE_ENV !== "development" || hasClientCredentials)
-) {
-  throw new Error(
-    "Unauthenticated requests are only allowed for local development without bot credentials.",
-  );
-}
-
-if (missing.length > 0 && !allowUnauthenticatedRequests) {
-  throw new Error(
-    `Missing required env vars: ${missing.join(", ")}. Set DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS=true only for local Agents Playground development.`,
-  );
-}
-
 const options = hasClientCredentials
   ? { ...tokenCredentials }
   : { plugins: [] };
@@ -148,7 +142,6 @@ const app = new App({
   ...options,
   dangerouslyAllowUnauthenticatedRequests: allowUnauthenticatedRequests,
   logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
-  skipAuth: allowUnauthenticatedRequests,
 });
 
 app.on("install.add", async ({ send }) => {
