@@ -10,6 +10,15 @@
     },
     "botDisplayName": {
       "value": "Merch-Shop-Bot"
+    },
+    "botClientId": {
+      "value": "${{BOT_ID}}"
+    },
+    "botTenantId": {
+      "value": "${{TEAMS_APP_TENANT_ID}}"
+    },
+    "botClientSecret": {
+      "value": "${{SECRET_BOT_PASSWORD}}"
     }
   }
 }

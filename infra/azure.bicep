@@ -10,11 +10,10 @@ param webAppName string = resourceBaseName
 param location string = resourceGroup().location
 @maxLength(42)
 param botDisplayName string
-
-resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  location: location
-  name: resourceBaseName
-}
+param botClientId string
+param botTenantId string
+@secure()
+param botClientSecret string
 
 resource serverfarm 'Microsoft.Web/serverfarms@2021-02-01' = {
   kind: 'app'
@@ -48,25 +47,23 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           value: '1'
         }
         {
+          name: 'NODE_ENV'
+          value: 'production'
+        }
+        {
           name: 'CLIENT_ID'
-          value: identity.properties.clientId
+          value: botClientId
         }
         {
           name: 'TENANT_ID'
-          value: identity.properties.tenantId
+          value: botTenantId
         }
         {
-          name: 'BOT_TYPE'
-          value: 'UserAssignedMsi'
+          name: 'CLIENT_SECRET'
+          value: botClientSecret
         }
       ]
       ftpsState: 'FtpsOnly'
-    }
-  }
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${identity.id}': {}
     }
   }
 }
@@ -77,9 +74,8 @@ module azureBotRegistration './botRegistration/azurebot.bicep' = {
   params: {
     resourceBaseName: resourceBaseName
     botDisplayName: botDisplayName
-    identityResourceId: identity.id
-    identityClientId: identity.properties.clientId
-    identityTenantId: identity.properties.tenantId
+    botClientId: botClientId
+    botTenantId: botTenantId
     botAppDomain: webApp.properties.defaultHostName
   }
 }
@@ -88,5 +84,5 @@ module azureBotRegistration './botRegistration/azurebot.bicep' = {
 output AZURE_APP_SERVICE_RESOURCE_ID string = webApp.id // used in deploy stage
 output BOT_DOMAIN string = webApp.properties.defaultHostName
 output BOT_ENDPOINT string = 'https://${webApp.properties.defaultHostName}'
-output BOT_ID string = identity.properties.clientId
-output BOT_TENANT_ID string = identity.properties.tenantId
+output BOT_ID string = botClientId
+output BOT_TENANT_ID string = botTenantId
