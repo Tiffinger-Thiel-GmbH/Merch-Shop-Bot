@@ -140,7 +140,6 @@ const options = hasClientCredentials
 
 const app = new App({
   ...options,
-  dangerouslyAllowUnauthenticatedRequests: allowUnauthenticatedRequests,
   logger: new ConsoleLogger("MerchShop-Bot", { level: "debug" }),
 });
 
