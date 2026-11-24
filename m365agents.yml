@@ -3,7 +3,7 @@
 # Visit https://aka.ms/teamsfx-actions for details on actions
 version: v1.11
 
-environmentFolderPath: ./env
+environmentFolderPath: .env
 
 provision:
   # Creates an app
@@ -100,7 +100,6 @@ deploy:
       resourceId: ${{AZURE_APP_SERVICE_RESOURCE_ID}}
 
 publish:
-
   # Build app package with latest env value
   - uses: teamsApp/zipAppPackage
     with:
