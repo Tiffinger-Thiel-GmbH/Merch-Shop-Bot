@@ -21,7 +21,19 @@ import {
   SentActivity,
   TokenCredentials,
 } from "@microsoft/teams.api";
+import { useUserStore } from "./userStore";
 const orderResponseCard = orderResponseCardJson as IAdaptiveCard;
+
+export function apiFetch(path: string, init: RequestInit = {}) {
+  const userId = useUserStore.getState().userId;
+  return fetch(`https://localhost:3000/${path}`, {
+    ...init,
+    headers: {
+      ...init.headers,
+      ...(userId && { "X-User-Id": userId }),
+    },
+  });
+}
 
 /** Save the activity reference of the message previously sent with sendWithRef as user.id -> activity.id mapping */
 const PreviousMessageReferences: Record<string, string> = {};
