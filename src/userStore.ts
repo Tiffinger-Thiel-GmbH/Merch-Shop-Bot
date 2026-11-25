@@ -1,5 +1,4 @@
-// userStore.ts
-import { create } from "zustand";
+import { createStore } from "zustand/vanilla";
 
 interface UserState {
   userId: string | null;
@@ -8,7 +7,7 @@ interface UserState {
   clear: () => void;
 }
 
-export const useUserStore = create<UserState>()((set) => ({
+export const useUserStore = createStore<UserState>()((set) => ({
   userId: null,
   token: null,
   setUser: (userId, token) => set({ userId, token }),
