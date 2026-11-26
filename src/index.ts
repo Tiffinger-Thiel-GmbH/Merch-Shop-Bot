@@ -21,6 +21,7 @@ import {
   SentActivity,
   TokenCredentials,
 } from "@microsoft/teams.api";
+import { useUserStore } from "./userStore";
 const orderResponseCard = orderResponseCardJson as IAdaptiveCard;
 
 /** Save the activity reference of the message previously sent with sendWithRef as user.id -> activity.id mapping */
@@ -152,7 +153,8 @@ app.on("install.add", async ({ send }) => {
 });
 
 app.on("message", async (context): Promise<void> => {
-  const { send, activity, api } = context;
+  const { send, activity, api, appId } = context;
+  useUserStore.setState({ userId: activity.from.id, token: appId });
   const data = getCardActionData(activity.value);
   // Define the ID(s) to filter out (e.g., your own previous messages)
   const filteredIds = ["message-id-to-ignore-1", "message-id-to-ignore-2"];
