@@ -3,7 +3,7 @@ services:
     build: .
     restart: on-failure
     env_file:
-      - path: /env/.env.prod
+      - path: .env.prod
         required: true
     environment:
       NODE_ENV: production

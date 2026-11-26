@@ -3,7 +3,7 @@
 # Visit https://aka.ms/teamsfx-actions for details on actions
 version: v1.11
 
-environmentFolderPath: ./env
+environmentFolderPath: .env
 
 provision:
   # Creates an app
@@ -15,6 +15,18 @@ provision:
     # the specified environment variable(s).
     writeToEnvironmentFile:
       teamsAppId: TEAMS_APP_ID
+
+  # Create the single-tenant bot app registration and its service principal.
+  - uses: aadApp/create
+    with:
+      name: Merch-Shop-Bot${{APP_NAME_SUFFIX}}
+      generateClientSecret: true
+      generateServicePrincipal: true
+      signInAudience: AzureADMyOrg
+    writeToEnvironmentFile:
+      clientId: BOT_ID
+      clientSecret: SECRET_BOT_PASSWORD
+      objectId: BOT_OBJECT_ID
 
   - uses: arm/deploy # Deploy given ARM templates parallelly.
     with:
@@ -88,7 +100,6 @@ deploy:
       resourceId: ${{AZURE_APP_SERVICE_RESOURCE_ID}}
 
 publish:
-
   # Build app package with latest env value
   - uses: teamsApp/zipAppPackage
     with:

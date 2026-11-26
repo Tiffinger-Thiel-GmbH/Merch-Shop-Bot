@@ -118,7 +118,6 @@
         "messageTeamMembers"
     ],
     "validDomains": [
-        "${{BOT_DOMAIN}}",
         "*.botframework.com",
         "*.com"
     ]

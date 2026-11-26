@@ -23,3 +23,5 @@ deploy:
       target: ./.localConfigs.playground
       envs:
         PORT: 3978
+        NODE_ENV: development
+        DANGEROUSLY_ALLOW_UNAUTHENTICATED_REQUESTS: true
