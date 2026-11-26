@@ -24,17 +24,6 @@ import {
 import { useUserStore } from "./userStore";
 const orderResponseCard = orderResponseCardJson as IAdaptiveCard;
 
-export function apiFetch(path: string, init: RequestInit = {}) {
-  const userId = useUserStore.getState().userId;
-  return fetch(`https://localhost:3000/${path}`, {
-    ...init,
-    headers: {
-      ...init.headers,
-      ...(userId && { "X-User-Id": userId }),
-    },
-  });
-}
-
 /** Save the activity reference of the message previously sent with sendWithRef as user.id -> activity.id mapping */
 const PreviousMessageReferences: Record<string, string> = {};
 /**
@@ -164,7 +153,8 @@ app.on("install.add", async ({ send }) => {
 });
 
 app.on("message", async (context): Promise<void> => {
-  const { send, activity, api } = context;
+  const { send, activity, api, appId } = context;
+  useUserStore.setState({ userId: activity.from.id, token: appId });
   const data = getCardActionData(activity.value);
   // Define the ID(s) to filter out (e.g., your own previous messages)
   const filteredIds = ["message-id-to-ignore-1", "message-id-to-ignore-2"];
